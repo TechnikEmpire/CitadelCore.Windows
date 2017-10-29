@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>CitadelCore.Windows</id>
+    <version>1.1.1</version>
+    <title>CitadelCore.Windows</title>
+    <authors>Jesse Nicholson</authors>
+	<releaseNotes>Initial release.</releaseNotes>
+    <owners>TechnikEmpire</owners>
+	<projectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</projectUrl>
+	<requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <licenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</licenseUrl>    
+    <description>Transparent filtering proxy engine for Windows.</description>
+	<summary>Transparent filtering proxy engine for Windows.</summary>
+    <copyright>Copyright 2017 Jesse Nicholson</copyright>
+    <tags>HTTP proxy filtering-proxy filter content-filter</tags>	
+	<dependencies>
+		<dependency id="CitadelCore" version="1.2.0" />
+	</dependencies>
+  </metadata>  
+  <files>
+	<file src="CitadelCore.Windows.targets" target="build\CitadelCore.Windows.targets"/>
+	
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\bin\Release\CitadelCore.Windows.dll" target="lib\net461\CitadelCore.Windows.dll"/>
+	
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\Lib\WinDivert\x86\WinDivert.dll" target="build\x86\WinDivert.dll"/>
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\Lib\WinDivert\x64\WinDivert.dll" target="build\x64\WinDivert.dll"/>	
+	
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\Lib\WinDivert\x86\WinDivert32.sys" target="build\x86\WinDivert32.sys"/>
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\Lib\WinDivert\x64\WinDivert64.sys" target="build\x86\WinDivert64.sys"/>
+	<file src="..\CitadelCore.Windows\CitadelCore.Windows\Lib\WinDivert\x64\WinDivert64.sys" target="build\x64\WinDivert64.sys"/>
+  </files>
+</package>
