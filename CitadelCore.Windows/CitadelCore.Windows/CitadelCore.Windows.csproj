@@ -1,58 +1,67 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{B6BCE8E7-373C-4927-80A2-3E961B7A57E1}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CitadelCore.Windows</RootNamespace>
-    <AssemblyName>CitadelCore.Windows</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Version>1.2.1</Version>
+    <Authors>Jesse Nicholson</Authors>
+    <Company>Technik Empire</Company>
+    <Description>Transparent filtering proxy engine for Windows.</Description>
+    <Copyright>Copyright 2017 Jesse Nicholson</Copyright>
+    <PackageLicenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
+    <PackageReleaseNotes>Upgrade to .NET core 2.0. Upgrades underlying core proxy, inheriting fixes.</PackageReleaseNotes>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <AssemblyVersion>1.1.2.0</AssemblyVersion>
+    <FileVersion>1.1.2.0</FileVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
+
+  <ItemGroup Label="dotnet pack instructions">
+    <Content Include="build\*.targets">
+      <Pack>true</Pack>
+      <PackagePath>build\</PackagePath>
+    </Content>
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="Diversion\WinDivert.cs" />
-    <Compile Include="Diversion\WindowsDiverter.cs" />
-    <Compile Include="Net\Proxy\WindowsProxyServer.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="WinAPI\NetworkTables.cs" />
-    <Compile Include="WinAPI\ProcessUtilities.cs" />
+    <PackageReference Include="CitadelCore" Version="1.2.4" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="CitadelCore">
-      <Version>1.2.0</Version>
-    </PackageReference>
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+
+  <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
+    <!-- Collect these items inside a target that runs after build but before packaging. -->
+    <ItemGroup>
+      <Content Include="$(OutputPath)\x86\*.dll;$(OutputPath)\x86\*.sys;">
+        <Pack>true</Pack>
+        <PackagePath>build\x86\</PackagePath>
+      </Content>
+    </ItemGroup>
+    
+    <ItemGroup>
+      <Content Include="$(OutputPath)\x64\*.dll;$(OutputPath)\x64\*.sys;">
+        <Pack>true</Pack>
+        <PackagePath>build\x64\</PackagePath>
+      </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Include="$(OutputPath)\*.pdb;">
+        <Pack>true</Pack>
+        <PackagePath>build\</PackagePath>
+      </Content>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+    <Exec Command="xcopy /E /Y /C &quot;$(ProjectDir)\Lib\WinDivert\x64\*.dll&quot; &quot;$(OutDir)\x64\&quot;&#xD;&#xA;xcopy /E /Y /C &quot;$(ProjectDir)\Lib\WinDivert\x64\*.sys&quot; &quot;$(OutDir)\x64\&quot;&#xD;&#xA;xcopy /E /Y /C &quot;$(ProjectDir)\Lib\WinDivert\x86\*.dll&quot; &quot;$(OutDir)\x86\&quot;&#xD;&#xA;xcopy /E /Y /C &quot;$(ProjectDir)\Lib\WinDivert\x86\*.sys&quot; &quot;$(OutDir)\x86\&quot;" />
+  </Target>
+
 </Project>
