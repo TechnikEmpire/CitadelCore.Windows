@@ -10,6 +10,7 @@ using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Net.Proxy;
 using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 
 namespace CitadelCoreTest
@@ -26,6 +27,8 @@ namespace CitadelCoreTest
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
+            Console.WriteLine(nameof(OnMsgBegin));
+
             if(reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
             {
                 nextAction = ProxyNextAction.DropConnection;
@@ -35,6 +38,18 @@ namespace CitadelCoreTest
             }
 
             nextAction = ProxyNextAction.AllowAndIgnoreContent;
+
+            if(msgDirection == MessageDirection.Response)
+            {
+                Console.WriteLine("Got HTTP response.");
+
+                if(headers.IndexOf("html") != -1)
+                {
+                    Console.WriteLine("Requesting to inspect HTML response.");
+                    nextAction = ProxyNextAction.AllowButRequestContentInspection;
+                }
+            }
+            
             customBlockResponseContentType = string.Empty;
             customBlockResponse = null;
         }
@@ -42,6 +57,23 @@ namespace CitadelCoreTest
         private static void OnMsgEnd(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out bool shouldBlock, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
             Console.WriteLine(nameof(OnMsgEnd));
+
+            if(msgDirection == MessageDirection.Response)
+            {
+                Console.WriteLine("Got http response for inspection.");
+
+                if(body != null)
+                {
+                    Console.WriteLine("Http HTML response body is {0} bytes long.", body.Length);
+
+                    Console.Write(headers);
+
+                    // We should check Content-Type for charset=XXXX.
+                    var htmlResponse = Encoding.UTF8.GetString(body);
+
+                    Console.WriteLine(htmlResponse);
+                }
+            }
 
             shouldBlock = false;
             customBlockResponseContentType = string.Empty;
