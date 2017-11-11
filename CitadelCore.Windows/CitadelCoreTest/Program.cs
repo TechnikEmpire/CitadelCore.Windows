@@ -21,8 +21,8 @@ namespace CitadelCoreTest
 
         private static bool OnFirewallCheck(string binaryAbsPath)
         {
-            // Only filter chrome.
-            return binaryAbsPath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
+            // Only filter firefox.
+            return binaryAbsPath.IndexOf("firefox", StringComparison.OrdinalIgnoreCase) != -1;
         }
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
@@ -42,8 +42,8 @@ namespace CitadelCoreTest
             if(msgDirection == MessageDirection.Response)
             {
                 Console.WriteLine("Got HTTP response.");
-
-                if(headers.IndexOf("html") != -1)
+                
+                if(headers.IndexOf("html") != -1 || headers.IndexOf("json") != -1)
                 {
                     Console.WriteLine("Requesting to inspect HTML response.");
                     nextAction = ProxyNextAction.AllowButRequestContentInspection;
@@ -56,6 +56,10 @@ namespace CitadelCoreTest
 
         private static void OnMsgEnd(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out bool shouldBlock, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
+            shouldBlock = false;
+            customBlockResponseContentType = string.Empty;
+            customBlockResponse = null;
+
             Console.WriteLine(nameof(OnMsgEnd));
 
             if(msgDirection == MessageDirection.Response)
@@ -64,7 +68,7 @@ namespace CitadelCoreTest
 
                 if(body != null)
                 {
-                    Console.WriteLine("Http HTML response body is {0} bytes long.", body.Length);
+                    Console.WriteLine("Http HTML or JSON response body is {0} bytes long.", body.Length);
 
                     Console.Write(headers);
 
@@ -72,12 +76,13 @@ namespace CitadelCoreTest
                     var htmlResponse = Encoding.UTF8.GetString(body);
 
                     Console.WriteLine(htmlResponse);
+
+                    if(htmlResponse.IndexOf("777.com") != -1)
+                    {
+                        shouldBlock = true;
+                    }
                 }
             }
-
-            shouldBlock = false;
-            customBlockResponseContentType = string.Empty;
-            customBlockResponse = null;
         }
 
         private static void Main(string[] args)
