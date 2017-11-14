@@ -43,11 +43,13 @@ namespace CitadelCoreTest
             {
                 Console.WriteLine("Got HTTP response.");
                 
-                if(headers.IndexOf("html") != -1 || headers.IndexOf("json") != -1)
+                if(headers.IndexOf("html") != -1)
                 {
                     Console.WriteLine("Requesting to inspect HTML response.");
                     nextAction = ProxyNextAction.AllowButRequestContentInspection;
                 }
+
+                //Console.WriteLine(headers);
             }
             
             customBlockResponseContentType = string.Empty;
