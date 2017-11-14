@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.2.8</Version>
+    <Version>1.2.10</Version>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
     <Description>Transparent filtering proxy engine for Windows.</Description>
@@ -13,8 +13,8 @@
     <PackageReleaseNotes>Upgrades underlying core proxy, inheriting fixes.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>1.2.8.0</AssemblyVersion>
-    <FileVersion>1.2.8.0</FileVersion>
+    <AssemblyVersion>1.2.10.0</AssemblyVersion>
+    <FileVersion>1.2.10.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="1.2.17" />
+    <PackageReference Include="CitadelCore" Version="1.2.20" />
   </ItemGroup>
 
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
