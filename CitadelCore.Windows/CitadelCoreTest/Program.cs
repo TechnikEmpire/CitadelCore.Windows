@@ -22,7 +22,7 @@ namespace CitadelCoreTest
         private static bool OnFirewallCheck(string binaryAbsPath)
         {
             // Only filter firefox.
-            return binaryAbsPath.IndexOf("firefox", StringComparison.OrdinalIgnoreCase) != -1;
+            return binaryAbsPath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
         }
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)

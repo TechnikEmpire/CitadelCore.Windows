@@ -505,11 +505,12 @@ namespace WinDivert
                     var b3 = BitConverter.GetBytes(addr[2]);
                     var b4 = BitConverter.GetBytes(addr[3]);
                     var bytes = new byte[] {
-                    b1[0], b1[1], b1[2], b1[3],
-                    b2[0], b2[1], b2[2], b2[3],
-                    b3[0], b3[1], b3[2], b3[3],
-                    b4[0], b1[1], b4[2], b4[3]
-                };
+                        b1[0], b1[1], b1[2], b1[3],
+                        b2[0], b2[1], b2[2], b2[3],
+                        b3[0], b3[1], b3[2], b3[3],
+                        b4[0], b4[1], b4[2], b4[3]
+                    };
+
                     return new IPAddress(bytes);
                 }
             }
@@ -552,7 +553,7 @@ namespace WinDivert
                     b1[0], b1[1], b1[2], b1[3],
                     b2[0], b2[1], b2[2], b2[3],
                     b3[0], b3[1], b3[2], b3[3],
-                    b4[0], b1[1], b4[2], b4[3]
+                    b4[0], b4[1], b4[2], b4[3]
                 };
                     return new IPAddress(bytes);
                 }

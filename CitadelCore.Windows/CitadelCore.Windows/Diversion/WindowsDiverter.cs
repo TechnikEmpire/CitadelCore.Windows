@@ -181,9 +181,9 @@ namespace CitadelCore.Windows.Diversion
 #else
                 string mainFilterString = "outbound and tcp";
 #endif
-                string QUICFilterString = "udp and (udp.DstPort == 80 || udp.DstPort == 443)";
+                string QUICFilterString = "outbound and udp.DstPort == 80 || udp.DstPort == 443";
 
-                m_diversionHandle = WinDivertMethods.WinDivertOpen(mainFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -1000, 0);
+                m_diversionHandle = WinDivertMethods.WinDivertOpen(mainFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -999, 0);
 
                 if(m_diversionHandle == new IntPtr(-1) || m_diversionHandle == IntPtr.Zero)
                 {
@@ -191,8 +191,8 @@ namespace CitadelCore.Windows.Diversion
                     throw new Exception(string.Format("Failed to open main diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
                 }
 
-                m_QUICDropHandle = WinDivertMethods.WinDivertOpen(QUICFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, 0, WinDivertConstants.WINDIVERT_FLAG_DROP);
-
+                m_QUICDropHandle = WinDivertMethods.WinDivertOpen(QUICFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -1000, WinDivertConstants.WINDIVERT_FLAG_DROP);
+                
                 if(m_QUICDropHandle == new IntPtr(-1) || m_QUICDropHandle == IntPtr.Zero)
                 {
                     // Invalid handle value.
@@ -349,7 +349,7 @@ namespace CitadelCore.Windows.Diversion
                                 {
                                     if(m_v6portInfo[tcpHeader->SrcPort] == null || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 6 || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 0)
                                     {
-                                        // System process. Don't bother.
+                                        // System process. Don't bother.                                        
                                         Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], false);
                                     }
                                     else
@@ -357,14 +357,14 @@ namespace CitadelCore.Windows.Diversion
                                         var procPath = m_v6portInfo[tcpHeader->SrcPort] == null ? string.Empty : m_v6portInfo[tcpHeader->SrcPort].OwnerProcessPath;
 
                                         if(procPath.Length <= 0)
-                                        {
+                                        {   
                                             // This is something we couldn't get a handle on. Since
                                             // we can't do that that's probably a bad sign (SYSTEM
                                             // process maybe?), don't filter it.
                                             Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], false);
                                         }
                                         else
-                                        {
+                                        {   
                                             // If no firewall callback is available, just default to true, meaning we will force
                                             // this connection through the filter.                                            
                                             var result = ConfirmDenyFirewallAccess?.Invoke(procPath);
@@ -581,12 +581,12 @@ namespace CitadelCore.Windows.Diversion
             {
                 case System.Net.Sockets.AddressFamily.InterNetwork:
                 {
-                    return NetworkTables.GetTcp4Table().Where(x => x.LocalPort == localPort && x.LocalAddress.Equals(localAddress)).FirstOrDefault();
+                    return NetworkTables.GetTcp4Table().Where(x => x.LocalPort == localPort && (x.LocalAddress.Equals(localAddress) || x.LocalAddress.Equals(IPAddress.Any))).FirstOrDefault();
                 }
 
                 case System.Net.Sockets.AddressFamily.InterNetworkV6:
                 {
-                    return NetworkTables.GetTcp6Table().Where(x => x.LocalPort == localPort && x.LocalAddress.Equals(localAddress)).FirstOrDefault();
+                    return NetworkTables.GetTcp6Table().Where(x => x.LocalPort == localPort && (x.LocalAddress.Equals(localAddress) || x.LocalAddress.Equals(IPAddress.IPv6Any))).FirstOrDefault();
                 }
             }
 
