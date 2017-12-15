@@ -181,9 +181,9 @@ namespace CitadelCore.Windows.Diversion
 #else
                 string mainFilterString = "outbound and tcp";
 #endif
-                string QUICFilterString = "outbound and udp.DstPort == 80 || udp.DstPort == 443";
+                string QUICFilterString = "udp and (udp.DstPort == 80 || udp.DstPort == 443)";
 
-                m_diversionHandle = WinDivertMethods.WinDivertOpen(mainFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -999, 0);
+                m_diversionHandle = WinDivertMethods.WinDivertOpen(mainFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -1000, 0);
 
                 if(m_diversionHandle == new IntPtr(-1) || m_diversionHandle == IntPtr.Zero)
                 {
@@ -191,7 +191,7 @@ namespace CitadelCore.Windows.Diversion
                     throw new Exception(string.Format("Failed to open main diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
                 }
 
-                m_QUICDropHandle = WinDivertMethods.WinDivertOpen(QUICFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -1000, WinDivertConstants.WINDIVERT_FLAG_DROP);
+                m_QUICDropHandle = WinDivertMethods.WinDivertOpen(QUICFilterString, WINDIVERT_LAYER.WINDIVERT_LAYER_NETWORK, -999, WinDivertConstants.WINDIVERT_FLAG_DROP);
                 
                 if(m_QUICDropHandle == new IntPtr(-1) || m_QUICDropHandle == IntPtr.Zero)
                 {
