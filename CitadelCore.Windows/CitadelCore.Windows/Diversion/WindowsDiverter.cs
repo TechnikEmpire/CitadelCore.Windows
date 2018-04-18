@@ -347,7 +347,7 @@ namespace CitadelCore.Windows.Diversion
                                 }
                                 else
                                 {
-                                    if(m_v6portInfo[tcpHeader->SrcPort] == null || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 6 || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 0)
+                                    if(m_v6portInfo[tcpHeader->SrcPort] == null || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 4 || m_v6portInfo[tcpHeader->SrcPort].OwnerPid == 0)
                                     {
                                         // System process. Don't bother.                                        
                                         Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], false);

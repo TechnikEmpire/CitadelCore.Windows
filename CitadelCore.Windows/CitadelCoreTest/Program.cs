@@ -22,11 +22,23 @@ namespace CitadelCoreTest
         private static bool OnFirewallCheck(string binaryAbsPath)
         {
             // Only filter firefox.
-            return binaryAbsPath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
+            var filtering = binaryAbsPath.IndexOf("firefox", StringComparison.OrdinalIgnoreCase) != -1;
+
+            if(filtering)
+            {
+                Console.WriteLine("Filtering application {0}", binaryAbsPath);
+            }
+
+            return filtering;
         }
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
+            customBlockResponseContentType = string.Empty;
+            nextAction = ProxyNextAction.AllowAndIgnoreContent;
+            customBlockResponse = null;
+            return;
+
             Console.WriteLine(nameof(OnMsgBegin));
 
             if(reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
@@ -90,6 +102,7 @@ namespace CitadelCoreTest
         private static void Main(string[] args)
         {
             s_blockPageBytes = File.ReadAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BlockedPage.html"));
+            
             // Let the user decide when to quit with ctrl+c.
             var manualResetEvent = new ManualResetEvent(false);
 
