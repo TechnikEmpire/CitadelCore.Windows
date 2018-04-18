@@ -34,11 +34,6 @@ namespace CitadelCoreTest
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
-            customBlockResponseContentType = string.Empty;
-            nextAction = ProxyNextAction.AllowAndIgnoreContent;
-            customBlockResponse = null;
-            return;
-
             Console.WriteLine(nameof(OnMsgBegin));
 
             if(reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
