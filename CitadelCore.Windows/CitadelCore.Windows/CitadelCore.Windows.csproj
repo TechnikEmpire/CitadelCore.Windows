@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>2.1.1</Version>
+    <Version>2.1.2</Version>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
     <Description>Transparent filtering proxy engine for Windows.</Description>
@@ -10,15 +10,11 @@
     <PackageLicenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Inherits fixes from core engine.
-Fixes a bug where there was a potential for a NRE.
-Implements new core engine 2.X API where library users have much greater control over not just filtering, but internet access in general. Port-based permission and denial, port + application, filtering, filter-bypassing and flat out denial of internet service are now available to library users.
-
-Enables users to now specify the common name/subject name of their certificate authority.</PackageReleaseNotes>
+    <PackageReleaseNotes>This release does nothing but constrain the StreamExtended dependency version in the core engine, since newer releases are broken at the time of this writing.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>2.1.1.0</AssemblyVersion>
-    <FileVersion>2.1.1.0</FileVersion>
+    <AssemblyVersion>2.1.2.0</AssemblyVersion>
+    <FileVersion>2.1.2.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -39,7 +35,7 @@ Enables users to now specify the common name/subject name of their certificate a
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="2.2.2" />
+    <PackageReference Include="CitadelCore" Version="2.2.3" />
   </ItemGroup>
     
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
