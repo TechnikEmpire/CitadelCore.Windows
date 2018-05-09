@@ -151,7 +151,7 @@ namespace WinDivert
         /// <summary>
         /// Sets the fragment offset for the given ipv4 header.
         /// </summary>
-        /// <param name="hdr">
+        /// <param name="header">
         /// The ipv4 header.
         /// </param>
         /// <param name="val">
@@ -165,7 +165,7 @@ namespace WinDivert
         /// <summary>
         /// Sets the more fragments flag to the given value.
         /// </summary>
-        /// <param name="hdr">
+        /// <param name="header">
         /// The ipv4 header.
         /// </param>
         /// <param name="val">
@@ -179,7 +179,7 @@ namespace WinDivert
         /// <summary>
         /// Sets the don't fragment flag to the given value.
         /// </summary>
-        /// <param name="hdr">
+        /// <param name="header">
         /// The ipv4 header.
         /// </param>
         /// <param name="val">
@@ -193,7 +193,7 @@ namespace WinDivert
         /// <summary>
         /// Sets the reserved flag to the given value.
         /// </summary>
-        /// <param name="hdr">
+        /// <param name="header">
         /// The ipv4 header.
         /// </param>
         /// <param name="val">

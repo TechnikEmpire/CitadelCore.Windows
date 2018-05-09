@@ -1,5 +1,5 @@
 ﻿/*
- * Copyright © 2017 Jesse Nicholson
+ * Copyright © 2017-Present Jesse Nicholson
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General internal License as published by

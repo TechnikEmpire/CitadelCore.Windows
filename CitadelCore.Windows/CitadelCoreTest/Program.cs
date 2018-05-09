@@ -1,5 +1,5 @@
 ﻿/*
-* Copyright © 2017 Jesse Nicholson
+* Copyright © 2017-Present Jesse Nicholson
 * This Source Code Form is subject to the terms of the Mozilla Public
 * License, v. 2.0. If a copy of the MPL was not distributed with this
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
@@ -19,24 +19,41 @@ namespace CitadelCoreTest
     {
         private static byte[] s_blockPageBytes;
 
-        private static bool OnFirewallCheck(string binaryAbsPath)
+        private static FirewallResponse OnFirewallCheck(FirewallRequest request)
         {
-            // Only filter firefox.
-            var filtering = binaryAbsPath.IndexOf("firefox", StringComparison.OrdinalIgnoreCase) != -1;
+            // Only filter chrome.
+            var filtering = request.BinaryAbsolutePath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
 
             if(filtering)
             {
-                Console.WriteLine("Filtering application {0}", binaryAbsPath);
+                switch(request.RemotePort)
+                {
+                    case 80:
+                    case 443:
+                        {
+                            // Let's allow chrome to access TCP 80 and 443, but block all other ports.
+                            Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
+                            return new FirewallResponse(FirewallAction.FilterApplication);
+                        }                        
+
+                    default:
+                        {
+                            // Let's allow chrome to access TCP 80 and 443, but block all other ports. This is where we're
+                            // blocking any non-80/443 bound transmission.
+                            Console.WriteLine("Blocking internet for application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
+                            return new FirewallResponse(FirewallAction.BlockInternetForApplication);
+                        }
+                }
             }
 
-            return filtering;
+            // For all other applications, just let them access the internet without filtering.
+            Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
+            return new FirewallResponse(FirewallAction.DontFilterApplication);
         }
 
         private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
         {
-            Console.WriteLine(nameof(OnMsgBegin));
-
-            if(reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
+            if (reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
             {
                 nextAction = ProxyNextAction.DropConnection;
                 customBlockResponseContentType = "text/html";
@@ -68,8 +85,6 @@ namespace CitadelCoreTest
             shouldBlock = false;
             customBlockResponseContentType = string.Empty;
             customBlockResponse = null;
-
-            Console.WriteLine(nameof(OnMsgEnd));
 
             if(msgDirection == MessageDirection.Response)
             {
@@ -128,7 +143,7 @@ namespace CitadelCoreTest
             };
             
             // Just create the server.
-            var proxyServer = new WindowsProxyServer(OnFirewallCheck, OnMsgBegin, OnMsgEnd);
+            var proxyServer = new WindowsProxyServer("Fake Authority", OnFirewallCheck, OnMsgBegin, OnMsgEnd);
             
             // Give it a kick.
             proxyServer.Start();
