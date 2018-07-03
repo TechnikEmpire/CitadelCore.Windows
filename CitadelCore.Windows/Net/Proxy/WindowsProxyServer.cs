@@ -17,6 +17,8 @@
 
 using System;
 using System.Net;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using CitadelCore.Diversion;
 using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Diversion;
@@ -78,6 +80,11 @@ namespace CitadelCore.Windows.Net.Proxy
         protected override IDiverter CreateDiverter(IPEndPoint ipv4HttpEp, IPEndPoint ipv4HttpsEp, IPEndPoint ipv6HttpEp, IPEndPoint ipv6HttpsEp)
         {
             return new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port);
+        }
+
+        protected override bool CertificateVerificationHandler(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return base.CertificateVerificationHandler(sender, certificate, chain, sslPolicyErrors);
         }
     }
 }

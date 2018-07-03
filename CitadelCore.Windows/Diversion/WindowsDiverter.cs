@@ -609,8 +609,6 @@ namespace CitadelCore.Windows.Diversion
         {
             if (tcpHeader != null)
             {
-                Console.WriteLine(nameof(HandleNewTcpConnection));
-
                 if (connInfo != null && connInfo.OwnerPid == m_thisPid)
                 {
                     LoggerProxy.Default.Info(string.Format("Connection from local:{0} -> remote:{1} outbound is our process.", tcpHeader->SrcPort, tcpHeader->DstPort));

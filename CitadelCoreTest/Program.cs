@@ -10,6 +10,11 @@ using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Net.Proxy;
 using System;
 using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 
@@ -65,7 +70,7 @@ namespace CitadelCoreTest
 
             if(msgDirection == MessageDirection.Response)
             {
-                Console.WriteLine("Got HTTP response.");
+                Console.WriteLine("Got HTTP response.\n{0}", reqUrl.AbsoluteUri);
                 
                 if(headers.IndexOf("html") != -1)
                 {
@@ -73,7 +78,7 @@ namespace CitadelCoreTest
                     nextAction = ProxyNextAction.AllowButRequestContentInspection;
                 }
 
-                //Console.WriteLine(headers);
+                Console.WriteLine(headers);
             }
             
             customBlockResponseContentType = string.Empty;
@@ -88,7 +93,7 @@ namespace CitadelCoreTest
 
             if(msgDirection == MessageDirection.Response)
             {
-                Console.WriteLine("Got http response for inspection.");
+                Console.WriteLine("Got http response for inspection.\n{0}", reqUrl.AbsoluteUri);
 
                 if(body != null)
                 {
@@ -99,7 +104,7 @@ namespace CitadelCoreTest
                     // We should check Content-Type for charset=XXXX.
                     var htmlResponse = Encoding.UTF8.GetString(body);
 
-                    Console.WriteLine(htmlResponse);
+                    //Console.WriteLine(htmlResponse);
 
                     if(htmlResponse.IndexOf("777.com") != -1)
                     {
