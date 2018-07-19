@@ -34,27 +34,13 @@ namespace CitadelCore.Windows.Net.Proxy
         /// Creates a new WindowsProxyServer instance. Really there should only ever be a single instance
         /// created at a time.
         /// </summary>
-        /// <param name="authorityCommonName">
-        /// The common name to use when generating the certificate authority. Basically, all SSL
-        /// sites will show that they are secured by a certificate authority with this name that is
-        /// supplied here.
-        /// </param>
-        /// <param name="firewallCallback">
-        /// The firewall check callback. Used to allow the user to determine if a binary should have
-        /// its associated traffic pushed through the filter or not.
-        /// </param>
-        /// <param name="messageBeginCallback">
-        /// Message begin callback enables users to inspect and filter messages immediately after
-        /// they begin. Users also have the power to direct how the proxy will continue to handle the
-        /// overall transaction that this message belongs to.
-        /// </param>
-        /// <param name="messageEndCallback">
-        /// Message end callback enables users to inspect and filter messages once they have completed. 
-        /// </param>
+        /// <param name="configuration">
+        /// The proxy server configuration to use.
+        /// </param>       
         /// <exception cref="ArgumentException">
-        /// Will throw if any one of the callbacks are not defined. 
+        /// Will throw if any one of the callbacks in the supplied configuration are not defined. 
         /// </exception>
-        public WindowsProxyServer(string authorityCommonName, FirewallCheckCallback firewallCallback, MessageBeginCallback messageBeginCallback, MessageEndCallback messageEndCallback) : base(authorityCommonName, firewallCallback, messageBeginCallback, messageEndCallback)
+        public WindowsProxyServer(ProxyServerConfiguration configuration) : base(configuration)
         {
         }
 
@@ -78,13 +64,8 @@ namespace CitadelCore.Windows.Net.Proxy
         /// The platform specific diverter. 
         /// </returns>
         protected override IDiverter CreateDiverter(IPEndPoint ipv4HttpEp, IPEndPoint ipv4HttpsEp, IPEndPoint ipv6HttpEp, IPEndPoint ipv6HttpsEp)
-        {
+        {   
             return new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port);
-        }
-
-        protected override bool CertificateVerificationHandler(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return base.CertificateVerificationHandler(sender, certificate, chain, sslPolicyErrors);
         }
     }
 }

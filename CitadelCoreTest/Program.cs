@@ -5,9 +5,12 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+using CitadelCore.IO;
 using CitadelCore.Logging;
+using CitadelCore.Net.Http;
 using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Net.Proxy;
+using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.IO;
 using System.Text;
@@ -51,61 +54,187 @@ namespace CitadelCoreTest
             return new FirewallResponse(FirewallAction.DontFilterApplication);
         }
 
-        private static void OnMsgBegin(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out ProxyNextAction nextAction, out string customBlockResponseContentType, out byte[] customBlockResponse)
+        /// <summary>
+        /// Force all bing-destined requests to go to yahoo.com.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        private static bool RedirectBingToYahoo(HttpMessageInfo messageInfo)
         {
-            if (reqUrl.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
+            if (messageInfo.MessageType == MessageType.Request && messageInfo.Url.Host.Contains("bing."))
             {
-                nextAction = ProxyNextAction.DropConnection;
-                customBlockResponseContentType = "text/html";
-                customBlockResponse = s_blockPageBytes;
+                messageInfo.MakeTemporaryRedirect("https://www.yahoo.com");
+                messageInfo.ProxyNextAction = ProxyNextAction.DropConnection;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Rewrites the message URL to force safe search on if the host is a google.X domain.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        private static void ForceGoogleSafeSearch(HttpMessageInfo messageInfo)
+        {
+            // If the host has google in it, we'll append the safe search command.
+            if(messageInfo.Url.Host.IndexOf("google.", StringComparison.OrdinalIgnoreCase) > -1)
+            {
+                // Take everything but query params.
+                string newUri = messageInfo.Url.GetLeftPart(UriPartial.Path);
+
+                // Parse the params.
+                var queryParams = QueryHelpers.ParseQuery(messageInfo.Url.Query);
+                
+                // Iterate over all parsed params.
+                foreach (var param in queryParams)
+                {   
+                    // Skip any param named "safe" because who knows, the user might
+                    // explicitly have &safe=inative, disabling safe search, so just
+                    // ignore anything named this.
+                    if (param.Key.Equals("safe", StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+
+                    // Anything not "safe" param, append to the new URI.
+                    foreach (var value in param.Value)
+                    {
+                        newUri = QueryHelpers.AddQueryString(newUri, param.Key, value);
+                    }
+                }
+
+                // When we're all done, append safe search enforcement.
+                newUri = QueryHelpers.AddQueryString(newUri, "safe", "active");
+
+                // if we end up with a valid URI, overwrite it.
+                if (Uri.TryCreate(newUri, UriKind.Absolute, out Uri result))
+                {
+                    messageInfo.Url = result;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Called whenever a new request or response message is intercepted.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        /// <remarks>
+        /// In this callback we can do all kinds of crazy things, including fully modify the HTTP
+        /// headers, the request target, etc etc.
+        /// </remarks>
+        private static void OnNewMessage(HttpMessageInfo messageInfo)
+        {
+            ForceGoogleSafeSearch(messageInfo);
+
+            if (RedirectBingToYahoo(messageInfo))
+            {
                 return;
             }
 
-            nextAction = ProxyNextAction.AllowAndIgnoreContent;
-
-            if (msgDirection == MessageDirection.Response)
+            // Block only this casino website.
+            if (messageInfo.Url.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
             {
-                Console.WriteLine("Got HTTP response.\n{0}", reqUrl.AbsoluteUri);
-
-                if (headers.IndexOf("html") != -1)
-                {
-                    Console.WriteLine("Requesting to inspect HTML response.");
-                    nextAction = ProxyNextAction.AllowButRequestContentInspection;
-                }
-
-                Console.WriteLine(headers);
+                messageInfo.ProxyNextAction = ProxyNextAction.DropConnection;
+                messageInfo.BodyContentType = "text/html";
+                messageInfo.Body = s_blockPageBytes;
+                return;
             }
 
-            customBlockResponseContentType = string.Empty;
-            customBlockResponse = null;
+            // By default, allow and ignore content, but not any responses to this content.
+            messageInfo.ProxyNextAction = ProxyNextAction.AllowAndIgnoreContent;
+
+            // If the new message is a response, we want to inspect the payload if it is HTML.
+            if (messageInfo.MessageType == MessageType.Response)
+            {
+                foreach (string headerName in messageInfo.Headers)
+                {
+                    if (messageInfo.Headers[headerName].IndexOf("html") != -1)
+                    {
+                        Console.WriteLine("Requesting to inspect HTML response for request {0}.", messageInfo.Url);
+                        messageInfo.ProxyNextAction = ProxyNextAction.AllowButRequestContentInspection;
+                        return;
+                    }                    
+                }
+
+                // The other kind of filtering we want to do here is to monitor video
+                // streams. So, if we find a video content type in a response, we'll subscribe
+                // the very new, and extremely exciting streaming inspection callback!!!!!
+                var contentTypeKey = "Content-Type";                
+                var contentType = messageInfo.Headers[contentTypeKey];
+
+                if (contentType != null && (contentType.IndexOf("video/", StringComparison.OrdinalIgnoreCase) != -1 || contentType.IndexOf("mpeg", StringComparison.OrdinalIgnoreCase) != -1))
+                {
+                    // Means we have a video response coming.
+                    // We want to get the video stream too! Because we have the tools to tell
+                    // if video is naughty or nice!
+                    Console.WriteLine("Requesting to inspect streamed video response.");
+                    messageInfo.ProxyNextAction = ProxyNextAction.AllowButRequestStreamedContentInspection;
+                }
+            }
         }
 
-        private static void OnMsgEnd(Uri reqUrl, string headers, byte[] body, MessageType msgType, MessageDirection msgDirection, out bool shouldBlock, out string customBlockResponseContentType, out byte[] customBlockResponse)
+        /// <summary>
+        /// Called whenever we've requested to inspect an entire message payload.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        private static void OnWholeBodyContentInspection(HttpMessageInfo messageInfo)
         {
-            shouldBlock = false;
-            customBlockResponseContentType = string.Empty;
-            customBlockResponse = null;
-
-            if (msgDirection == MessageDirection.Response)
+            if (messageInfo.Body.Length > 0)
             {
-                Console.WriteLine("Got http response for inspection.\n{0}", reqUrl.AbsoluteUri);
+                // We assume it's HTML because HTML is the only type we request
+                // to inspect, but you can double-check if you'd like.
+                // We should check Content-Type for charset=XXXX.
+                var htmlResponse = Encoding.UTF8.GetString(messageInfo.Body.ToArray());
 
-                if (body != null)
+                // Any HTML that has 777.com in it, we want to block.
+                if (htmlResponse.IndexOf("777.com") != -1)
                 {
-                    Console.WriteLine("Http HTML or JSON response body is {0} bytes long.", body.Length);
-
-                    Console.Write(headers);
-
-                    // We should check Content-Type for charset=XXXX.
-                    var htmlResponse = Encoding.UTF8.GetString(body);
-
-                    //Console.WriteLine(htmlResponse);
-
-                    if (htmlResponse.IndexOf("777.com") != -1)
-                    {
-                        shouldBlock = true;
-                    }
+                    Console.WriteLine("Request {0} blocked by content inspection.", messageInfo.Url);
+                    messageInfo.ProxyNextAction = ProxyNextAction.DropConnection;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Called whenever we've subscribed to monitor a payload in a streaming fashion. This is
+        /// useful for say, virus scanning without forcing the entire payload to be buffered into
+        /// memory before it is streamed to the user, or to monitor and decode video on the fly
+        /// without affecting the user. You can terminate the stream at any time while monitoring.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The originating http message item.
+        /// </param>
+        /// <param name="operation">
+        /// The operation kind.
+        /// </param>
+        /// <param name="buffer">
+        /// The data that passed through the stream.
+        /// </param>
+        /// <param name="dropConnection">
+        /// Whether or not to immediately terminate the connection.
+        /// </param>
+        private static void OnStreamedContentInspection(HttpMessageInfo messageInfo, StreamOperation operation, Memory<byte> buffer, out bool dropConnection)
+        {
+            var toFrom = operation == StreamOperation.Read ? "from" : "to";
+            Console.WriteLine($"Stream {operation} {buffer.Length} bytes {toFrom} {messageInfo.Url}");
+            dropConnection = false;
+
+            // Drop googlevideo.com videos.
+            if (messageInfo.Url.Host.IndexOf(".googlevideo.com") > -1)
+            {
+                // This basically means you can't watch anything on youtube. You can still load the
+                // site, but you can't play any videos.
+                // This is just to demonstrate that it's possible to have complete
+                // control over unbuffered streams.
+                dropConnection = true;
             }
         }
 
@@ -141,8 +270,18 @@ namespace CitadelCoreTest
                 Console.WriteLine("ERRO: {0}", msg);
             };
 
+            var cfg = new ProxyServerConfiguration
+            {
+                AuthorityName = "Fake Authority",
+                FirewallCheckCallback = OnFirewallCheck,
+                NewHttpMessageHandler = OnNewMessage,
+                HttpMessageWholeBodyInspectionHandler = OnWholeBodyContentInspection,
+                HttpMessageStreamedInspectionHandler = OnStreamedContentInspection
+            };
+            
+
             // Just create the server.
-            var proxyServer = new WindowsProxyServer("Fake Authority", OnFirewallCheck, OnMsgBegin, OnMsgEnd);
+            var proxyServer = new WindowsProxyServer(cfg);
 
             // Give it a kick.
             proxyServer.Start();

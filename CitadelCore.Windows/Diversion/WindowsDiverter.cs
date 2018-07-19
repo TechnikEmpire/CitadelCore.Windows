@@ -611,8 +611,6 @@ namespace CitadelCore.Windows.Diversion
             {
                 if (connInfo != null && connInfo.OwnerPid == m_thisPid)
                 {
-                    LoggerProxy.Default.Info(string.Format("Connection from local:{0} -> remote:{1} outbound is our process.", tcpHeader->SrcPort, tcpHeader->DstPort));
-
                     // This is our process.
                     switch (isIpv6)
                     {
@@ -647,8 +645,7 @@ namespace CitadelCore.Windows.Diversion
                     }
 
                     if (response == null)
-                    {
-                        LoggerProxy.Default.Info("NO RESPONSE");
+                    {   
                         // The user couldn't be bothered to give us an answer, so just go ahead and
                         // let the packet through.
 
@@ -672,8 +669,7 @@ namespace CitadelCore.Windows.Diversion
                         }
                     }
                     else
-                    {
-                        LoggerProxy.Default.Info("RESPONSE");
+                    {   
                         switch (isIpv6)
                         {
                             case true:
@@ -697,8 +693,6 @@ namespace CitadelCore.Windows.Diversion
             }
             else
             {
-                LoggerProxy.Default.Info("How on earth do we not have a valid TCP header.");
-
                 // Somehow we fail to have even a valid TCP header here. Let the connection go
                 // through, but warn.
                 LoggerProxy.Default.Warn("TCP header was a null pointer. Allowing packet.");
