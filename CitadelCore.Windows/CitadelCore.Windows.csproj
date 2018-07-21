@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.1</Version>
+    <Version>3.0.4</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -12,19 +12,13 @@
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
     <PackageReleaseNotes>Inherits the following from CitadelCore update:
-Major API overhaul.
-Adds the ability to inspect streams in addition to complete payloads. It's also copy-less. This means, for example, that one could dynamically inspect video streams without interrupting or buffering the user experience. You can also terminate streams while inspecting.
-Adds the ability to fully modify HTTP headers and bodies at-will.
-Provides copy-less access to payloads for inspection.
-Moves proxy constructor arguments into a configuration class for neatness.
-No longer loads all non-ignored payloads into memory.
-Fixes an issue where blocked responses would not actually get blocked.
-Provides a great deal of information about connections now, which makes it possible to match requests and responses to the name of software behind the traffic by combining data in the firewall callback with data in the new HttpMessageInfo class that is now passed to library users.
-Misc cleanup of source.</PackageReleaseNotes>
+Fixes a critical issue introducts in 3.0.1 where a failure to modify the payload causes responses to become malformed.
+No longer logs exceptions when inspection streams are force-closed.
+No longer nags the user with silly warnings about header issues that are really a non-issue.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.1.0</AssemblyVersion>
-    <FileVersion>3.0.1.0</FileVersion>
+    <AssemblyVersion>3.0.4.0</AssemblyVersion>
+    <FileVersion>3.0.4.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -45,7 +39,7 @@ Misc cleanup of source.</PackageReleaseNotes>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.1" />
+    <PackageReference Include="CitadelCore" Version="3.0.4" />
   </ItemGroup>
     
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
