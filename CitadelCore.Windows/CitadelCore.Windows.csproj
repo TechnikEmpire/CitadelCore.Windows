@@ -22,13 +22,14 @@ No longer nags the user with silly warnings about header issues that are really 
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\netstandard2.0\CitadelCore.Windows.xml</DocumentationFile>
     <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <DocumentationFile>bin\Debug\netstandard2.0\CitadelCore.Windows.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup Label="dotnet pack instructions">
@@ -40,6 +41,7 @@ No longer nags the user with silly warnings about header issues that are really 
 
   <ItemGroup>
     <PackageReference Include="CitadelCore" Version="3.0.4" />
+    <PackageReference Include="WinDivertSharp" Version="1.4.3" />
   </ItemGroup>
     
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
