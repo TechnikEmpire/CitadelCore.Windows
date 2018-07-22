@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{6310E947-2EEE-4822-BDBF-59C8CE7F02B7}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>CitadelCoreTest</RootNamespace>
-    <AssemblyName>CitadelCoreTest</AssemblyName>
+    <RootNamespace>CitadelCore.Windows.Test</RootNamespace>
+    <AssemblyName>CitadelCore.Windows.Test</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>

@@ -334,9 +334,9 @@ namespace CitadelCore.Windows.Diversion
                             continue;
                         }
 
-                        recvLength = recvAsyncIoLen;
-                        WinApiHelpers.CloseHandle(recvEvent);
+                        recvLength = recvAsyncIoLen;                        
                     }
+                    WinApiHelpers.CloseHandle(recvEvent);
 
                     #endregion Packet Reading Code
 

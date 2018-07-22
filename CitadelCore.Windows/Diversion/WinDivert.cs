@@ -258,8 +258,8 @@ namespace WinDivert
         /// </param>
         public static void WINDIVERT_IPV6HDR_SET_FLOWLABEL(WINDIVERT_IPV6HDR hdr, uint val)
         {
-            //hdr.FlowLabel0 = (uint)(val >> 16);
-            //hdr.FlowLabel1 = (ushort)val;
+            hdr.FlowLabel0 = (uint)(val >> 16);
+            hdr.FlowLabel1 = (ushort)val;
         }
 
         /// WINDIVERT_HELPER_NO_IP_CHECKSUM -> 1
