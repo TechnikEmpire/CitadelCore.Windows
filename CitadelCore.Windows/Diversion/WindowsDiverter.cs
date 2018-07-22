@@ -88,17 +88,7 @@ namespace CitadelCore.Windows.Diversion
         /// encrypted. Specific to IPv4 connections.
         /// </summary>
         private readonly bool[] m_v6EncryptionHints = new bool[ushort.MaxValue];
-
-        /// <summary>
-        /// Constant for port 80 TCP aka HTTP.
-        /// </summary>
-        private readonly ushort s_httpStandardPort;
-
-        /// <summary>
-        /// Constant for port 80 TCP aka HTTP alt port.
-        /// </summary>
-        private readonly ushort s_httpAltPort;
-
+        
         /// <summary>
         /// Constant for port 443 TCP aka HTTPS.
         /// </summary>
@@ -184,11 +174,20 @@ namespace CitadelCore.Windows.Diversion
             m_v6HttpProxyPort = v6httpProxyPort.SwapByteOrder();
             m_v6HttpsProxyPort = v6httpsProxyPort.SwapByteOrder();
 
-            s_httpAltPort = ((ushort)8080).SwapByteOrder();
-            s_httpsAltPort = ((ushort)8443).SwapByteOrder();
+            // WinDivertSharp does not do automatic byte order swapping like our old build-in
+            // version did. So, we'll do the swap to network order immediately, if applicable 
+            // (which it always should be) and then move on in life.
 
-            s_httpStandardPort = ((ushort)80).SwapByteOrder();
-            s_httpsStandardPort = ((ushort)443).SwapByteOrder();
+            if (BitConverter.IsLittleEndian)
+            {
+                s_httpsAltPort = ((ushort)8443).SwapByteOrder();
+                s_httpsStandardPort = ((ushort)443).SwapByteOrder();
+            }
+            else
+            {
+                s_httpsAltPort = ((ushort)8443);
+                s_httpsStandardPort = ((ushort)443);
+            }
         }
 
         /// <summary>
