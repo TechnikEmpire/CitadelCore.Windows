@@ -1,5 +1,9 @@
 # CitadelCore.Windows
-This is a platform-specific implementation of the abstract [Citadel Core library](https://github.com/TechnikEmpire/CitadelCore) for Windows. This library implements the packet diversion mechanism required by the base Citadel Core library using [WinDivert](https://github.com/basil00/Divert). Since we ported [WinDivert.h to be a C# Pinvoke class](https://github.com/TechnikEmpire/CitadelCore.Windows/blob/master/CitadelCore.Windows/Diversion/WinDivert.cs) in this library, and because we bundle WinDivert binaries, this project is under the LGPLv3 license permitted by WinDivert's license.
+This is a platform-specific implementation of the abstract [Citadel Core library](https://github.com/TechnikEmpire/CitadelCore) for Windows. This library implements the packet diversion mechanism required by the base Citadel Core library using [WinDivert](https://github.com/basil00/Divert). 
+
+As of version 3.0.x, this library is licensed under the [MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
+
+This project uses the fantastic [WinDivert](https://github.com/basil00/Divert) project via [WinDivertSharp](https://github.com/TechnikEmpire/WinDivertSharp). If this project is useful to you, please consider supporting [WinDivert](https://github.com/basil00/Divert).
 
 [![Build Status](https://travis-ci.org/TechnikEmpire/CitadelCore.Windows.svg?branch=master)](https://travis-ci.org/TechnikEmpire/CitadelCore.Windows)
 <a href="https://scan.coverity.com/projects/technikempire-citadelcore-windows">
