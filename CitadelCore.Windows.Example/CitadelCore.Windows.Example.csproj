@@ -32,7 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -62,12 +62,18 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CitadelCore.Windows">
-      <Version>3.0.1</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities">
       <Version>2.1.1</Version>
     </PackageReference>
+    <PackageReference Include="WinDivertSharp">
+      <Version>1.4.3.2</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CitadelCore.Windows\CitadelCore.Windows.csproj">
+      <Project>{08845003-f4af-4062-b8c8-fc2b6524144f}</Project>
+      <Name>CitadelCore.Windows</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

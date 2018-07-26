@@ -2,24 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.7</Version>
+    <Version>3.0.8</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
     <Description>Transparent filtering proxy engine for Windows.</Description>
     <Copyright>Copyright 2017-Present Jesse Nicholson</Copyright>
-    <PackageLicenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Now has ci via travis.
-Removed WinDivert, changed license to MPL 2.0 and linked to WinDivertSharp library instead.
-No longer requires unsafe code internally.
-Cleaned up some unused variables.
-Fixes a minor issue with overlapped events not being cleaned up correctly always.</PackageReleaseNotes>
+    <PackageReleaseNotes>Inherits several critical fixes from WinDivertSharp and CitadelCore.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.7.0</AssemblyVersion>
-    <FileVersion>3.0.7.0</FileVersion>
+    <AssemblyVersion>3.0.8.0</AssemblyVersion>
+    <FileVersion>3.0.8.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -43,25 +39,12 @@ Fixes a minor issue with overlapped events not being cleaned up correctly always
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.4" />
-    <PackageReference Include="WinDivertSharp" Version="1.4.3" />
+    <PackageReference Include="CitadelCore" Version="3.0.5" />
+    <PackageReference Include="WinDivertSharp" Version="1.4.3.2" />
   </ItemGroup>
     
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
     <!-- Collect these items inside a target that runs after build but before packaging. -->
-    <ItemGroup>
-      <Content Include="$(OutputPath)\x86\*.dll;$(OutputPath)\x86\*.sys;">
-        <Pack>true</Pack>
-        <PackagePath>build\x86\</PackagePath>
-      </Content>
-    </ItemGroup>
-    
-    <ItemGroup>
-      <Content Include="$(OutputPath)\x64\*.dll;$(OutputPath)\x64\*.sys;">
-        <Pack>true</Pack>
-        <PackagePath>build\x64\</PackagePath>
-      </Content>
-    </ItemGroup>
 
     <ItemGroup>
       <Content Include="$(OutputPath)\*.pdb;">

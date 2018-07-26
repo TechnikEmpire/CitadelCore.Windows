@@ -13,6 +13,7 @@ using CitadelCore.Windows.Net.Proxy;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.IO;
+using System.Net;
 using System.Text;
 using System.Threading;
 
@@ -22,6 +23,9 @@ namespace CitadelCoreTest
     {
         private static byte[] s_blockPageBytes;
 
+        private static readonly ushort s_standardHttpPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)80);
+        private static readonly ushort s_standardHttpsPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)443);
+
         private static FirewallResponse OnFirewallCheck(FirewallRequest request)
         {
             // Only filter chrome.
@@ -29,28 +33,23 @@ namespace CitadelCoreTest
 
             if (filtering)
             {
-                switch (request.RemotePort)
+                if (request.RemotePort == s_standardHttpPortNetworkOrder || request.RemotePort == s_standardHttpsPortNetworkOrder)
                 {
-                    case 80:
-                    case 443:
-                        {
-                            // Let's allow chrome to access TCP 80 and 443, but block all other ports.
-                            Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
-                            return new FirewallResponse(FirewallAction.FilterApplication);
-                        }
-
-                    default:
-                        {
-                            // Let's allow chrome to access TCP 80 and 443, but block all other
-                            // ports. This is where we're blocking any non-80/443 bound transmission.
-                            Console.WriteLine("Blocking internet for application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
-                            return new FirewallResponse(FirewallAction.BlockInternetForApplication);
-                        }
+                    // Let's allow chrome to access TCP 80 and 443, but block all other ports.
+                    Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+                    return new FirewallResponse(FirewallAction.FilterApplication);
+                }
+                else
+                {
+                    // Let's allow chrome to access TCP 80 and 443, but block all other
+                    // ports. This is where we're blocking any non-80/443 bound transmission.
+                    Console.WriteLine("Blocking internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+                    return new FirewallResponse(FirewallAction.BlockInternetForApplication);
                 }
             }
 
             // For all other applications, just let them access the internet without filtering.
-            Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, request.RemotePort);
+            Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
             return new FirewallResponse(FirewallAction.DontFilterApplication);
         }
 
