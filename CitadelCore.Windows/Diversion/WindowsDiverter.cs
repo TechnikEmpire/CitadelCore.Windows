@@ -649,7 +649,7 @@ namespace CitadelCore.Windows.Diversion
                 FirewallResponse response = null;
                 if (connInfo == null || connInfo.OwnerPid == 4 || connInfo.OwnerPid == 0)
                 {
-                    var firewallRequest = new FirewallRequest("SYSTEM", tcpHeader.SrcPort, tcpHeader.DstPort);
+                    var firewallRequest = new FirewallRequest("SYSTEM", tcpHeader.SrcPort, tcpHeader.DstPort, connInfo.OwnerPid);
                     response = ConfirmDenyFirewallAccess?.Invoke(firewallRequest);
                 }
                 else
@@ -657,7 +657,7 @@ namespace CitadelCore.Windows.Diversion
                     // No need to null check here, because the above IF catches whenever connInfo
                     // is null.
                     var procPath = connInfo.OwnerProcessPath.Length > 0 ? connInfo.OwnerProcessPath : "SYSTEM";
-                    var firewallRequest = new FirewallRequest(procPath, tcpHeader.SrcPort, tcpHeader.DstPort);
+                    var firewallRequest = new FirewallRequest(procPath, tcpHeader.SrcPort, tcpHeader.DstPort, connInfo.OwnerPid);
                     response = ConfirmDenyFirewallAccess?.Invoke(firewallRequest);
                 }
 

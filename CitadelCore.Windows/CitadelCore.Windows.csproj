@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.9</Version>
+    <Version>3.0.10</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,15 +11,11 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Inherits the following changes from new CitadelCore version:
-
-Fixes an issue where duplicate headers were being generated.
-Fixes an issue where user generated header values could be ignored.
-Adds an interface to the Start mechanism of the ProxyServer class where the user can specify the total number of packet IO threads. Defaults to 0, which is auto-select for the platform specific diverter that is actually using this value.</PackageReleaseNotes>
+    <PackageReleaseNotes>Firewall requests now include the process ID, not just the name.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.9.0</AssemblyVersion>
-    <FileVersion>3.0.9.0</FileVersion>
+    <AssemblyVersion>3.0.10.0</AssemblyVersion>
+    <FileVersion>3.0.10.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -43,7 +39,7 @@ Adds an interface to the Start mechanism of the ProxyServer class where the user
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.8" />
+    <PackageReference Include="CitadelCore" Version="3.0.10" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.2" />
   </ItemGroup>
     
