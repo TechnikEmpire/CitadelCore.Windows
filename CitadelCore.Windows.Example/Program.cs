@@ -13,9 +13,12 @@ using CitadelCore.Windows.Net.Proxy;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
+using System.Reflection;
 using System.Text;
 using System.Threading;
+using WindowsFirewallHelper;
 
 namespace CitadelCoreTest
 {
@@ -37,20 +40,20 @@ namespace CitadelCoreTest
                 {
                     // Let's allow chrome to access TCP 80 and 443, but block all other ports.
                     Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
-                    return new FirewallResponse(FirewallAction.FilterApplication);
+                    return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.FilterApplication);
                 }
                 else
                 {
                     // Let's allow chrome to access TCP 80 and 443, but block all other
                     // ports. This is where we're blocking any non-80/443 bound transmission.
                     Console.WriteLine("Blocking internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
-                    return new FirewallResponse(FirewallAction.BlockInternetForApplication);
+                    return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.BlockInternetForApplication);
                 }
             }
 
             // For all other applications, just let them access the internet without filtering.
             Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
-            return new FirewallResponse(FirewallAction.DontFilterApplication);
+            return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.DontFilterApplication);
         }
 
         /// <summary>
@@ -237,8 +240,47 @@ namespace CitadelCoreTest
             }
         }
 
+        private static void GrantSelfFirewallAccess()
+        {
+            string processName = System.Diagnostics.Process.GetCurrentProcess().ProcessName;
+            var hostAssembly = Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+
+            // We want to delete all rules that match our process name, so we can create new ones
+            // that we know will work.
+            var myRules = FirewallManager.Instance.Rules.Where(r => r.Name.Equals(processName, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (myRules != null)
+            {
+                foreach (var rule in myRules)
+                {
+                    FirewallManager.Instance.Rules.Remove(rule);
+                }
+            }
+
+            // Allow all inbound and outbound communications from our process.
+            var inboundRule = FirewallManager.Instance.CreateApplicationRule(
+                FirewallProfiles.Domain | FirewallProfiles.Private | FirewallProfiles.Public,
+                processName,
+                WindowsFirewallHelper.FirewallAction.Allow, hostAssembly.Location
+            );
+            inboundRule.Direction = FirewallDirection.Inbound;
+
+            FirewallManager.Instance.Rules.Add(inboundRule);
+
+            var outboundRule = FirewallManager.Instance.CreateApplicationRule(
+                FirewallProfiles.Domain | FirewallProfiles.Private | FirewallProfiles.Public,
+                processName,
+                WindowsFirewallHelper.FirewallAction.Allow, hostAssembly.Location
+            );
+            outboundRule.Direction = FirewallDirection.Outbound;
+
+            // Add the rules to the manager, which will commit them to Windows.
+            FirewallManager.Instance.Rules.Add(outboundRule);
+        }
+
         private static void Main(string[] args)
         {
+            GrantSelfFirewallAccess();
+
             s_blockPageBytes = File.ReadAllBytes(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BlockedPage.html"));
 
             // Let the user decide when to quit with ctrl+c.
@@ -283,7 +325,7 @@ namespace CitadelCoreTest
             var proxyServer = new WindowsProxyServer(cfg);
 
             // Give it a kick.
-            proxyServer.Start();
+            proxyServer.Start(0);
 
             // And you're up and running.
             Console.WriteLine("Proxy Running");

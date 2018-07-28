@@ -68,6 +68,9 @@
     <PackageReference Include="WinDivertSharp">
       <Version>1.4.3.2</Version>
     </PackageReference>
+    <PackageReference Include="WindowsFirewallHelper">
+      <Version>1.4.6592.8627</Version>
+    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\CitadelCore.Windows\CitadelCore.Windows.csproj">

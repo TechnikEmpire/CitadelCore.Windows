@@ -129,6 +129,8 @@ namespace CitadelCore.Windows.Diversion
         /// </summary>
         private List<Thread> m_diversionThreads;
 
+        private static readonly IntPtr s_InvalidHandleValue = new IntPtr(-1);
+
         /// <summary>
         /// Gets whether or not the diverter is currently active.
         /// </summary>
@@ -209,8 +211,6 @@ namespace CitadelCore.Windows.Diversion
                     return;
                 }
 
-                numThreads = 1;
-
                 if (numThreads <= 0)
                 {
                     numThreads = Environment.ProcessorCount;
@@ -227,7 +227,7 @@ namespace CitadelCore.Windows.Diversion
 
                 m_diversionHandle = WinDivert.WinDivertOpen(mainFilterString, WinDivertLayer.Network, -1000, 0);
 
-                if (m_diversionHandle == new IntPtr(-1) || m_diversionHandle == IntPtr.Zero)
+                if (m_diversionHandle == s_InvalidHandleValue || m_diversionHandle == IntPtr.Zero)
                 {
                     // Invalid handle value.
                     throw new Exception(string.Format("Failed to open main diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
@@ -235,7 +235,7 @@ namespace CitadelCore.Windows.Diversion
 
                 m_QUICDropHandle = WinDivert.WinDivertOpen(QUICFilterString, WinDivertLayer.Network, -999, WinDivertOpenFlags.Drop);
 
-                if (m_QUICDropHandle == new IntPtr(-1) || m_QUICDropHandle == IntPtr.Zero)
+                if (m_QUICDropHandle == s_InvalidHandleValue || m_QUICDropHandle == IntPtr.Zero)
                 {
                     // Invalid handle value.
                     throw new Exception(string.Format("Failed to open QUIC diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
@@ -271,6 +271,14 @@ namespace CitadelCore.Windows.Diversion
             NativeOverlapped recvOverlapped;
 
             IntPtr recvEvent = IntPtr.Zero;
+            recvEvent = WinDivertSharp.WinAPI.Kernel32.CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero);
+
+            if (recvEvent == IntPtr.Zero || recvEvent == new IntPtr(-1))
+            {
+                LoggerProxy.Default.Error("Failed to initialize receive IO event.");
+                return;
+            }
+
             uint recvAsyncIoLen = 0;
 
             bool isLocalIpv4 = false;
@@ -293,14 +301,7 @@ namespace CitadelCore.Windows.Diversion
                     recvAsyncIoLen = 0;
 
                     recvOverlapped = new NativeOverlapped();
-
-                    recvEvent = Kernel32.CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero);
-
-                    if (recvEvent == IntPtr.Zero || recvEvent == new IntPtr(-1))
-                    {
-                        LoggerProxy.Default.Warn("Failed to initialize receive IO event.");
-                        continue;
-                    }
+                    WinAPI.Kernel32.ResetEvent(recvEvent);                    
 
                     recvOverlapped.EventHandle = recvEvent;
 
@@ -314,41 +315,23 @@ namespace CitadelCore.Windows.Diversion
                         if (error != 997)
                         {
                             LoggerProxy.Default.Warn(string.Format("Unknown IO error ID {0}while awaiting overlapped result.", error));
-                            Kernel32.CloseHandle(recvEvent);
                             continue;
                         }
 
                         // 258 == WAIT_TIMEOUT
-                        switch (Kernel32.WaitForSingleObject(recvEvent, 1000))
+                        while (m_running && WinDivertSharp.WinAPI.Kernel32.WaitForSingleObject(recvEvent, 1000) == (uint)WaitForSingleObjectResult.WaitTimeout)
                         {
-                            case (uint)WaitForSingleObjectResult.WaitObject0:
-                                {
-                                }
-                                break;
-
-                            case (uint)WaitForSingleObjectResult.WaitTimeout:
-                                {
-                                    continue;
-                                }
-
-                            default:
-                                {
-                                    LoggerProxy.Default.Warn(string.Format("Failed to read packet from WinDivert with Win32 error {0}.", Marshal.GetLastWin32Error()));
-                                    continue;
-                                }
+                            
                         }
 
-                        if (!Kernel32.GetOverlappedResult(m_diversionHandle, ref recvOverlapped, ref recvAsyncIoLen, false))
+                        if (!WinDivertSharp.WinAPI.Kernel32.GetOverlappedResult(m_diversionHandle, ref recvOverlapped, ref recvAsyncIoLen, false))
                         {
                             LoggerProxy.Default.Warn("Failed to get overlapped result.");
-                            Kernel32.CloseHandle(recvEvent);
                             continue;
                         }
 
                         recvLength = recvAsyncIoLen;
                     }
-
-                    Kernel32.CloseHandle(recvEvent);
 
                     if (addr.Impostor)
                     {
@@ -517,12 +500,6 @@ namespace CitadelCore.Windows.Diversion
                                         // ourselves, then we divert its packets back inbound to the
                                         // local machine, changing the destination port appropriately.
                                         var dstAddress = parseResult.IPv4Header.DstAddr;
-
-                                        var bytes = parseResult.IPv4Header.SrcAddr.GetAddressBytes();
-                                        if (bytes[0] != 192)
-                                        {
-                                            var notLocal = true;
-                                        }
 
                                         parseResult.IPv4Header.DstAddr = parseResult.IPv4Header.SrcAddr;
                                         parseResult.IPv4Header.SrcAddr = dstAddress;

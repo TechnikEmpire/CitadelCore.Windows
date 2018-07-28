@@ -333,7 +333,7 @@ namespace CitadelCore.Windows.WinAPI
         {
             int tableSize = 0;
 
-            var result = GetTcp6Table2(IntPtr.Zero, ref tableSize, false);
+            var result = Iphlpapi.GetTcp6Table2(IntPtr.Zero, ref tableSize, false);
 
             IntPtr tcpTableRecordsPtr = IntPtr.Zero;
 
@@ -343,7 +343,7 @@ namespace CitadelCore.Windows.WinAPI
             {
                 tcpTableRecordsPtr = Marshal.AllocHGlobal(tableSize);
 
-                result = GetTcp6Table2(tcpTableRecordsPtr, ref tableSize, false);
+                result = Iphlpapi.GetTcp6Table2(tcpTableRecordsPtr, ref tableSize, false);
 
                 if(result != 0)
                 {
@@ -385,7 +385,7 @@ namespace CitadelCore.Windows.WinAPI
         {
             int tableSize = 0;
 
-            var result = GetTcpTable2(IntPtr.Zero, ref tableSize, false);
+            var result = Iphlpapi.GetTcpTable2(IntPtr.Zero, ref tableSize, false);
 
             IntPtr tcpTableRecordsPtr = IntPtr.Zero;
 
@@ -395,7 +395,7 @@ namespace CitadelCore.Windows.WinAPI
             {
                 tcpTableRecordsPtr = Marshal.AllocHGlobal(tableSize);
 
-                result = GetTcpTable2(tcpTableRecordsPtr, ref tableSize, false);
+                result = Iphlpapi.GetTcpTable2(tcpTableRecordsPtr, ref tableSize, false);
 
                 if(result != 0)
                 {
@@ -432,11 +432,5 @@ namespace CitadelCore.Windows.WinAPI
 
             return fTable;
         }
-
-        [DllImport("Iphlpapi.dll", EntryPoint = "GetTcp6Table2")]
-        private static extern int GetTcp6Table2(IntPtr TcpTable, ref int SizePointer, [MarshalAs(UnmanagedType.Bool)] bool Order);
-
-        [DllImport("Iphlpapi.dll", EntryPoint = "GetTcpTable2")]
-        private static extern int GetTcpTable2(IntPtr TcpTable, ref int SizePointer, [MarshalAs(UnmanagedType.Bool)] bool Order);
     }
 }
