@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.13</Version>
+    <Version>3.0.14</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,12 +11,12 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Inherits core engine fixes.
-Upgrades WinDivertSharp to latest version, which throws off pointer-to-reference conversion and additional package references suspected to be behind type resolution errors.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixes filtering query string issues introduced in previous version.
+Upgrades core engine to inhert critical fixes.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.13.0</AssemblyVersion>
-    <FileVersion>3.0.13.0</FileVersion>
+    <AssemblyVersion>3.0.14.0</AssemblyVersion>
+    <FileVersion>3.0.14.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -40,7 +40,7 @@ Upgrades WinDivertSharp to latest version, which throws off pointer-to-reference
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.12" />
+    <PackageReference Include="CitadelCore" Version="3.0.14" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     

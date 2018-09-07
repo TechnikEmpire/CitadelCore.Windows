@@ -142,6 +142,7 @@ namespace CitadelCoreTest
             // Block only this casino website.
             if (messageInfo.Url.Host.Equals("777.com", StringComparison.OrdinalIgnoreCase))
             {
+                messageInfo.MessageType = MessageType.Response;
                 messageInfo.ProxyNextAction = ProxyNextAction.DropConnection;
                 messageInfo.BodyContentType = "text/html";
                 messageInfo.Body = s_blockPageBytes;
