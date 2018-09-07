@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.10</Version>
+    <Version>3.0.13</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,23 +11,24 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Firewall requests now include the process ID, not just the name.</PackageReleaseNotes>
+    <PackageReleaseNotes>Inherits core engine fixes.
+Upgrades WinDivertSharp to latest version, which throws off pointer-to-reference conversion and additional package references suspected to be behind type resolution errors.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.10.0</AssemblyVersion>
-    <FileVersion>3.0.10.0</FileVersion>
+    <AssemblyVersion>3.0.13.0</AssemblyVersion>
+    <FileVersion>3.0.13.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\Release\netstandard2.0\CitadelCore.Windows.xml</DocumentationFile>
     <LangVersion>default</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <DocumentationFile>bin\Debug\netstandard2.0\CitadelCore.Windows.xml</DocumentationFile>
   </PropertyGroup>
 
@@ -39,8 +40,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.10" />
-    <PackageReference Include="WinDivertSharp" Version="1.4.3.2" />
+    <PackageReference Include="CitadelCore" Version="3.0.12" />
+    <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     
   <Target Name="CollectRuntimeOutputs" BeforeTargets="_GetPackageFiles">
