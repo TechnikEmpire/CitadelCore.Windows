@@ -48,13 +48,13 @@ namespace CitadelCore.Windows.Diversion
         /// Used for tracking which IPV4 TCP connections ought to be forced through the proxy server.
         /// We use the local port of TCP connections as the index to this array.
         /// </summary>
-        private readonly byte[] m_v4ShouldFilter = new byte[ushort.MaxValue];
+        private readonly byte[] m_v4ShouldFilter = new byte[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for tracking which IPV6 TCP connections ought to be forced through the proxy server.
         /// We use the local port of TCP connections as the index to this array.
         /// </summary>
-        private readonly byte[] m_v6ShouldFilter = new byte[ushort.MaxValue];
+        private readonly byte[] m_v6ShouldFilter = new byte[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for keeping track of the local port that we are to return packets to after filtering.
@@ -64,7 +64,7 @@ namespace CitadelCore.Windows.Diversion
         /// original port that a connection was intercepted on. This way, we can make sure we route
         /// filtered connection data back to the right local port.
         /// </remarks>
-        private readonly ushort[] m_v4ReturnPorts = new ushort[ushort.MaxValue];
+        private readonly ushort[] m_v4ReturnPorts = new ushort[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for keeping track of the local port that we are to return packets to after filtering.
@@ -74,19 +74,19 @@ namespace CitadelCore.Windows.Diversion
         /// original port that a connection was intercepted on. This way, we can make sure we route
         /// filtered connection data back to the right local port.
         /// </remarks>
-        private readonly ushort[] m_v6ReturnPorts = new ushort[ushort.MaxValue];
+        private readonly ushort[] m_v6ReturnPorts = new ushort[ushort.MaxValue + 1];
 
         /// <summary>
         /// Keeps track of user-supplied hints about whether or not a filtered connection is
         /// encrypted. Specific to IPv6 connections.
         /// </summary>
-        private readonly bool[] m_v4EncryptionHints = new bool[ushort.MaxValue];
+        private readonly bool[] m_v4EncryptionHints = new bool[ushort.MaxValue + 1];
 
         /// <summary>
         /// Keeps track of user-supplied hints about whether or not a filtered connection is
         /// encrypted. Specific to IPv4 connections.
         /// </summary>
-        private readonly bool[] m_v6EncryptionHints = new bool[ushort.MaxValue];
+        private readonly bool[] m_v6EncryptionHints = new bool[ushort.MaxValue + 1];
 
         /// <summary>
         /// Constant for port 443 TCP aka HTTPS.
@@ -338,12 +338,6 @@ namespace CitadelCore.Windows.Diversion
                         }
 
                         recvLength = recvAsyncIoLen;
-                    }
-
-                    if (addr.Impostor)
-                    {
-                        LoggerProxy.Default.Warn("Skipping imposter packet.");
-                        continue;
                     }
 
                     #endregion Packet Reading Code
