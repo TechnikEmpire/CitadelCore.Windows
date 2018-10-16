@@ -27,34 +27,34 @@ namespace CitadelCore.Windows.Diversion
         /// <summary>
         /// The local IPV4 port that the filtering proxy server is listening for HTTP connections on.
         /// </summary>
-        private readonly ushort m_v4HttpProxyPort;
+        private readonly ushort _v4HttpProxyPort;
 
         /// <summary>
         /// The local IPV4 port that the filtering proxy server is listening for HTTPS connections on.
         /// </summary>
-        private readonly ushort m_v4HttpsProxyPort;
+        private readonly ushort _v4HttpsProxyPort;
 
         /// <summary>
         /// The local IPV6 port that the filtering proxy server is listening for HTTP connections on.
         /// </summary>
-        private readonly ushort m_v6HttpProxyPort;
+        private readonly ushort _v6HttpProxyPort;
 
         /// <summary>
         /// The local IPV6 port that the filtering proxy server is listening for HTTPS connections on.
         /// </summary>
-        private readonly ushort m_v6HttpsProxyPort;
+        private readonly ushort _v6HttpsProxyPort;
 
         /// <summary>
         /// Used for tracking which IPV4 TCP connections ought to be forced through the proxy server.
         /// We use the local port of TCP connections as the index to this array.
         /// </summary>
-        private readonly byte[] m_v4ShouldFilter = new byte[ushort.MaxValue + 1];
+        private readonly byte[] _v4ShouldFilter = new byte[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for tracking which IPV6 TCP connections ought to be forced through the proxy server.
         /// We use the local port of TCP connections as the index to this array.
         /// </summary>
-        private readonly byte[] m_v6ShouldFilter = new byte[ushort.MaxValue + 1];
+        private readonly byte[] _v6ShouldFilter = new byte[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for keeping track of the local port that we are to return packets to after filtering.
@@ -64,7 +64,7 @@ namespace CitadelCore.Windows.Diversion
         /// original port that a connection was intercepted on. This way, we can make sure we route
         /// filtered connection data back to the right local port.
         /// </remarks>
-        private readonly ushort[] m_v4ReturnPorts = new ushort[ushort.MaxValue + 1];
+        private readonly ushort[] _v4ReturnPorts = new ushort[ushort.MaxValue + 1];
 
         /// <summary>
         /// Used for keeping track of the local port that we are to return packets to after filtering.
@@ -74,60 +74,60 @@ namespace CitadelCore.Windows.Diversion
         /// original port that a connection was intercepted on. This way, we can make sure we route
         /// filtered connection data back to the right local port.
         /// </remarks>
-        private readonly ushort[] m_v6ReturnPorts = new ushort[ushort.MaxValue + 1];
+        private readonly ushort[] _v6ReturnPorts = new ushort[ushort.MaxValue + 1];
 
         /// <summary>
         /// Keeps track of user-supplied hints about whether or not a filtered connection is
         /// encrypted. Specific to IPv6 connections.
         /// </summary>
-        private readonly bool[] m_v4EncryptionHints = new bool[ushort.MaxValue + 1];
+        private readonly bool[] _v4EncryptionHints = new bool[ushort.MaxValue + 1];
 
         /// <summary>
         /// Keeps track of user-supplied hints about whether or not a filtered connection is
         /// encrypted. Specific to IPv4 connections.
         /// </summary>
-        private readonly bool[] m_v6EncryptionHints = new bool[ushort.MaxValue + 1];
+        private readonly bool[] _v6EncryptionHints = new bool[ushort.MaxValue + 1];
 
         /// <summary>
         /// Constant for port 443 TCP aka HTTPS.
         /// </summary>
-        private readonly ushort m_httpsStandardPort;
+        private readonly ushort _httpsStandardPort;
 
         /// <summary>
         /// Constant for port 443 TCP aka HTTPS alt port.
         /// </summary>
-        private readonly ushort m_httpsAltPort;
+        private readonly ushort _httpsAltPort;
 
         /// <summary>
         /// Our process ID. We use this to ignore packets originating from within our own software.
         /// </summary>
-        private readonly ulong m_thisPid = (ulong)Process.GetCurrentProcess().Id;
+        private readonly ulong _thisPid = (ulong)Process.GetCurrentProcess().Id;
 
         /// <summary>
         /// Flag for the main processing loop.
         /// </summary>
-        private volatile bool m_running = false;
+        private volatile bool _running = false;
 
         /// <summary>
         /// For synchronizing startup and shutdown.
         /// </summary>
-        private readonly object m_startStopLock = new object();
+        private readonly object _startStopLock = new object();
 
         /// <summary>
         /// WinDivert driver handle.
         /// </summary>
-        private IntPtr m_diversionHandle = IntPtr.Zero;
+        private IntPtr _diversionHandle = IntPtr.Zero;
 
         /// <summary>
         /// WinDivert handle that simply drops all UDP packets destined for port 80 and 443 in order
         /// to render QUIC inoperable.
         /// </summary>
-        private IntPtr m_QUICDropHandle = IntPtr.Zero;
+        private IntPtr _QUICDropHandle = IntPtr.Zero;
 
         /// <summary>
         /// Collection of threads running against the WinDivert driver.
         /// </summary>
-        private List<Thread> m_diversionThreads;
+        private List<Thread> _diversionThreads;
 
         private static readonly IntPtr s_InvalidHandleValue = new IntPtr(-1);
 
@@ -138,7 +138,7 @@ namespace CitadelCore.Windows.Diversion
         {
             get
             {
-                return m_running;
+                return _running;
             }
         }
 
@@ -169,11 +169,11 @@ namespace CitadelCore.Windows.Diversion
         /// </param>
         public WindowsDiverter(ushort v4httpProxyPort, ushort v4httpsProxyPort, ushort v6httpProxyPort, ushort v6httpsProxyPort)
         {
-            m_v4HttpProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v4httpProxyPort);
-            m_v4HttpsProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v4httpsProxyPort);
+            _v4HttpProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v4httpProxyPort);
+            _v4HttpsProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v4httpsProxyPort);
 
-            m_v6HttpProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v6httpProxyPort);
-            m_v6HttpsProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v6httpsProxyPort);
+            _v6HttpProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v6httpProxyPort);
+            _v6HttpsProxyPort = (ushort)IPAddress.HostToNetworkOrder((short)v6httpsProxyPort);
 
             // WinDivertSharp does not do automatic byte order swapping like our old build-in version
             // did. So, we'll do the swap to network order immediately, if applicable (which it
@@ -181,13 +181,13 @@ namespace CitadelCore.Windows.Diversion
 
             if (BitConverter.IsLittleEndian)
             {
-                m_httpsAltPort = (ushort)IPAddress.HostToNetworkOrder((short)8443);
-                m_httpsStandardPort = (ushort)IPAddress.HostToNetworkOrder((short)443);
+                _httpsAltPort = (ushort)IPAddress.HostToNetworkOrder((short)8443);
+                _httpsStandardPort = (ushort)IPAddress.HostToNetworkOrder((short)443);
             }
             else
             {
-                m_httpsAltPort = ((ushort)8443);
-                m_httpsStandardPort = ((ushort)443);
+                _httpsAltPort = ((ushort)8443);
+                _httpsStandardPort = ((ushort)443);
             }
         }
 
@@ -204,9 +204,9 @@ namespace CitadelCore.Windows.Diversion
         /// </remarks>
         public void Start(int numThreads)
         {
-            lock (m_startStopLock)
+            lock (_startStopLock)
             {
-                if (m_running)
+                if (_running)
                 {
                     return;
                 }
@@ -216,7 +216,7 @@ namespace CitadelCore.Windows.Diversion
                     numThreads = Environment.ProcessorCount;
                 }
 
-                m_diversionThreads = new List<Thread>();
+                _diversionThreads = new List<Thread>();
 
 #if ENGINE_NO_BLOCK_TOR
                 string mainFilterString = "outbound and tcp and ((ip and ip.SrcAddr != 127.0.0.1) or (ipv6 and ipv6.SrcAddr != ::1))";
@@ -225,32 +225,32 @@ namespace CitadelCore.Windows.Diversion
 #endif
                 string QUICFilterString = "udp and (udp.DstPort == 80 || udp.DstPort == 443)";
 
-                m_diversionHandle = WinDivert.WinDivertOpen(mainFilterString, WinDivertLayer.Network, -1000, 0);
+                _diversionHandle = WinDivert.WinDivertOpen(mainFilterString, WinDivertLayer.Network, -1000, 0);
 
-                if (m_diversionHandle == s_InvalidHandleValue || m_diversionHandle == IntPtr.Zero)
+                if (_diversionHandle == s_InvalidHandleValue || _diversionHandle == IntPtr.Zero)
                 {
                     // Invalid handle value.
                     throw new Exception(string.Format("Failed to open main diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
                 }
 
-                m_QUICDropHandle = WinDivert.WinDivertOpen(QUICFilterString, WinDivertLayer.Network, -999, WinDivertOpenFlags.Drop);
+                _QUICDropHandle = WinDivert.WinDivertOpen(QUICFilterString, WinDivertLayer.Network, -999, WinDivertOpenFlags.Drop);
 
-                if (m_QUICDropHandle == s_InvalidHandleValue || m_QUICDropHandle == IntPtr.Zero)
+                if (_QUICDropHandle == s_InvalidHandleValue || _QUICDropHandle == IntPtr.Zero)
                 {
                     // Invalid handle value.
                     throw new Exception(string.Format("Failed to open QUIC diversion handle. Got Win32 error code {0}.", Marshal.GetLastWin32Error()));
                 }
 
                 // Set everything to maximum values.
-                WinDivert.WinDivertSetParam(m_diversionHandle, WinDivertParam.QueueLen, 16384);
-                WinDivert.WinDivertSetParam(m_diversionHandle, WinDivertParam.QueueTime, 8000);
-                WinDivert.WinDivertSetParam(m_diversionHandle, WinDivertParam.QueueSize, 33554432);
+                WinDivert.WinDivertSetParam(_diversionHandle, WinDivertParam.QueueLen, 16384);
+                WinDivert.WinDivertSetParam(_diversionHandle, WinDivertParam.QueueTime, 8000);
+                WinDivert.WinDivertSetParam(_diversionHandle, WinDivertParam.QueueSize, 33554432);
 
-                m_running = true;
+                _running = true;
 
                 for (int i = 0; i < numThreads; ++i)
                 {
-                    m_diversionThreads.Add(new Thread(() =>
+                    _diversionThreads.Add(new Thread(() =>
                     {
                         try
                         {
@@ -262,7 +262,7 @@ namespace CitadelCore.Windows.Diversion
                         }
                     }));
 
-                    m_diversionThreads.Last().Start();
+                    _diversionThreads.Last().Start();
                 }
             }
         }
@@ -294,7 +294,7 @@ namespace CitadelCore.Windows.Diversion
 
             Span<byte> payloadBufferPtr = null;
 
-            while (m_running)
+            while (_running)
             {
                 try
                 {
@@ -314,7 +314,7 @@ namespace CitadelCore.Windows.Diversion
 
                     #region Packet Reading Code
 
-                    if (!WinDivert.WinDivertRecvEx(m_diversionHandle, packet, 0, ref addr, ref recvLength, ref recvOverlapped))
+                    if (!WinDivert.WinDivertRecvEx(_diversionHandle, packet, 0, ref addr, ref recvLength, ref recvOverlapped))
                     {
                         var error = Marshal.GetLastWin32Error();
 
@@ -326,12 +326,12 @@ namespace CitadelCore.Windows.Diversion
                         }
 
                         // 258 == WAIT_TIMEOUT
-                        while (m_running && WinDivertSharp.WinAPI.Kernel32.WaitForSingleObject(recvEvent, 1000) == (uint)WaitForSingleObjectResult.WaitTimeout)
+                        while (_running && WinDivertSharp.WinAPI.Kernel32.WaitForSingleObject(recvEvent, 1000) == (uint)WaitForSingleObjectResult.WaitTimeout)
                         {
                             
                         }
 
-                        if (!WinDivertSharp.WinAPI.Kernel32.GetOverlappedResult(m_diversionHandle, ref recvOverlapped, ref recvAsyncIoLen, false))
+                        if (!WinDivertSharp.WinAPI.Kernel32.GetOverlappedResult(_diversionHandle, ref recvOverlapped, ref recvAsyncIoLen, false))
                         {
                             LoggerProxy.Default.Warn("Failed to get overlapped result.");
                             continue;
@@ -359,7 +359,7 @@ namespace CitadelCore.Windows.Diversion
                                 HandleNewTcpConnection(connInfo, parseResult.TcpHeader, false);
 
                                 // Handle the special case of entirely blocking internet for this application/port.
-                                if (Volatile.Read(ref m_v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
+                                if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
                                 {
                                     dropPacket = true;
                                 }
@@ -372,7 +372,7 @@ namespace CitadelCore.Windows.Diversion
                                 HandleNewTcpConnection(connInfo, parseResult.TcpHeader, true);
 
                                 // Handle the special case of entirely blocking internet for this application/port.
-                                if (Volatile.Read(ref m_v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
+                                if (Volatile.Read(ref _v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
                                 {
                                     dropPacket = true;
                                 }
@@ -386,7 +386,7 @@ namespace CitadelCore.Windows.Diversion
                         if (parseResult.IPv4Header != null)
                         {
                             // Handle the special case of entirely blocking internet for this application/port.
-                            if (Volatile.Read(ref m_v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
+                            if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
                             {
                                 dropPacket = true;
                             }
@@ -396,7 +396,7 @@ namespace CitadelCore.Windows.Diversion
                         if (!dropPacket && parseResult.IPv6Header != null)
                         {
                             // Handle the special case of entirely blocking internet for this application/port.
-                            if (Volatile.Read(ref m_v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
+                            if (Volatile.Read(ref _v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.BlockInternetForApplication)
                             {
                                 dropPacket = true;
                             }
@@ -435,7 +435,7 @@ namespace CitadelCore.Windows.Diversion
                             // certs, such as logging into one's router. If we didn't do this check and
                             // let these through, we would break such connections.
 
-                            if (Volatile.Read(ref m_v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
+                            if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
                             {
                                 isLocalIpv4 = parseResult.IPv4Header->DstAddr.IsPrivateIpv4Address();
 
@@ -462,7 +462,7 @@ namespace CitadelCore.Windows.Diversion
                         {
                             if (parseResult.IPv4Header != null && parseResult.TcpHeader != null)
                             {
-                                if (parseResult.TcpHeader->SrcPort == m_v4HttpProxyPort || parseResult.TcpHeader->SrcPort == m_v4HttpsProxyPort)
+                                if (parseResult.TcpHeader->SrcPort == _v4HttpProxyPort || parseResult.TcpHeader->SrcPort == _v4HttpsProxyPort)
                                 {
                                     // Means that the data is originating from our proxy in response to a
                                     // client's request, which means it was originally meant to go
@@ -472,7 +472,7 @@ namespace CitadelCore.Windows.Diversion
 
                                     modifiedPacket = true;
 
-                                    parseResult.TcpHeader->SrcPort = Volatile.Read(ref m_v4ReturnPorts[parseResult.TcpHeader->DstPort]);
+                                    parseResult.TcpHeader->SrcPort = Volatile.Read(ref _v4ReturnPorts[parseResult.TcpHeader->DstPort]);
                                     addr.Direction = WinDivertDirection.Inbound;
 
                                     var dstIp = parseResult.IPv4Header->DstAddr;
@@ -492,7 +492,7 @@ namespace CitadelCore.Windows.Diversion
                                     // need to ensure that the binary has been granted firewall access to
                                     // generate outbound traffic.
 
-                                    if (Volatile.Read(ref m_v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
+                                    if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
                                     {
                                         modifiedPacket = true;
 
@@ -507,14 +507,14 @@ namespace CitadelCore.Windows.Diversion
 
                                         addr.Direction = WinDivertDirection.Inbound;
 
-                                        Volatile.Write(ref m_v4ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
+                                        Volatile.Write(ref _v4ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
 
                                         // Unless we know for sure this is an encrypted connection via
                                         // the HTTP port, we should always default to sending to the
                                         // non-encrypted listener.
-                                        var encrypted = Volatile.Read(ref m_v4EncryptionHints[parseResult.TcpHeader->SrcPort]);
+                                        var encrypted = Volatile.Read(ref _v4EncryptionHints[parseResult.TcpHeader->SrcPort]);
 
-                                        parseResult.TcpHeader->DstPort = encrypted ? m_v4HttpsProxyPort : m_v4HttpProxyPort;
+                                        parseResult.TcpHeader->DstPort = encrypted ? _v4HttpsProxyPort : _v4HttpProxyPort;
                                     }
                                 }
                             }
@@ -523,11 +523,11 @@ namespace CitadelCore.Windows.Diversion
                             // larger addresses. Look at the ipv4 version notes for clarification on anything.
                             if (parseResult.IPv6Header != null && parseResult.TcpHeader != null)
                             {
-                                if (parseResult.TcpHeader->SrcPort == m_v6HttpProxyPort || parseResult.TcpHeader->SrcPort == m_v6HttpsProxyPort)
+                                if (parseResult.TcpHeader->SrcPort == _v6HttpProxyPort || parseResult.TcpHeader->SrcPort == _v6HttpsProxyPort)
                                 {
                                     modifiedPacket = true;
 
-                                    parseResult.TcpHeader->SrcPort = Volatile.Read(ref m_v6ReturnPorts[parseResult.TcpHeader->DstPort]);
+                                    parseResult.TcpHeader->SrcPort = Volatile.Read(ref _v6ReturnPorts[parseResult.TcpHeader->DstPort]);
                                     addr.Direction = WinDivertDirection.Inbound;
 
                                     var dstIp = parseResult.IPv6Header->DstAddr;
@@ -536,7 +536,7 @@ namespace CitadelCore.Windows.Diversion
                                 }
                                 else
                                 {
-                                    if (Volatile.Read(ref m_v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
+                                    if (Volatile.Read(ref _v6ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
                                     {
                                         modifiedPacket = true;
 
@@ -551,14 +551,14 @@ namespace CitadelCore.Windows.Diversion
 
                                         addr.Direction = WinDivertDirection.Inbound;
 
-                                        Volatile.Write(ref m_v6ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
+                                        Volatile.Write(ref _v6ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
 
                                         // Unless we know for sure this is an encrypted connection via
                                         // the HTTP port, we should always default to sending to the
                                         // non-encrypted listener.
-                                        var encrypted = Volatile.Read(ref m_v6EncryptionHints[parseResult.TcpHeader->SrcPort]);
+                                        var encrypted = Volatile.Read(ref _v6EncryptionHints[parseResult.TcpHeader->SrcPort]);
 
-                                        parseResult.TcpHeader->DstPort = encrypted ? m_v6HttpsProxyPort : m_v6HttpProxyPort;
+                                        parseResult.TcpHeader->DstPort = encrypted ? _v6HttpsProxyPort : _v6HttpProxyPort;
                                     }
                                 }
                             }
@@ -577,14 +577,14 @@ namespace CitadelCore.Windows.Diversion
                             }
                         }
 
-                        WinDivert.WinDivertSendEx(m_diversionHandle, packet, recvLength, 0, ref addr);
+                        WinDivert.WinDivertSendEx(_diversionHandle, packet, recvLength, 0, ref addr);
                     }
                 }
                 catch (Exception loopException)
                 {
                     LoggerProxy.Default.Error(loopException);
                 }
-            } // while (m_running)
+            } // while (_running)
         }
 
         /// <summary>
@@ -592,22 +592,22 @@ namespace CitadelCore.Windows.Diversion
         /// </summary>
         public void Stop()
         {
-            lock (m_startStopLock)
+            lock (_startStopLock)
             {
-                if (!m_running)
+                if (!_running)
                 {
                     return;
                 }
 
-                m_running = false;
+                _running = false;
 
-                foreach (var dt in m_diversionThreads)
+                foreach (var dt in _diversionThreads)
                 {
                     dt.Join();
                 }
 
-                WinDivert.WinDivertClose(m_diversionHandle);
-                WinDivert.WinDivertClose(m_QUICDropHandle);
+                WinDivert.WinDivertClose(_diversionHandle);
+                WinDivert.WinDivertClose(_QUICDropHandle);
             }
         }
 
@@ -632,20 +632,20 @@ namespace CitadelCore.Windows.Diversion
                 return;
             }
 
-            if (connInfo != null && connInfo.OwnerPid == m_thisPid)
+            if (connInfo != null && connInfo.OwnerPid == _thisPid)
             {
                 // This is our process.
                 switch (isIpv6)
                 {
                     case true:
                         {
-                            Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], (int)FirewallAction.DontFilterApplication);
+                            Volatile.Write(ref _v6ShouldFilter[tcpHeader->SrcPort], (int)FirewallAction.DontFilterApplication);
                         }
                         break;
 
                     case false:
                         {
-                            Volatile.Write(ref m_v4ShouldFilter[tcpHeader->SrcPort], (int)FirewallAction.DontFilterApplication);
+                            Volatile.Write(ref _v4ShouldFilter[tcpHeader->SrcPort], (int)FirewallAction.DontFilterApplication);
                         }
                         break;
                 }
@@ -676,17 +676,17 @@ namespace CitadelCore.Windows.Diversion
                     {
                         case true:
                             {
-                                Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], (byte)FirewallAction.DontFilterApplication);
+                                Volatile.Write(ref _v6ShouldFilter[tcpHeader->SrcPort], (byte)FirewallAction.DontFilterApplication);
 
-                                Volatile.Write(ref m_v6EncryptionHints[tcpHeader->SrcPort], (tcpHeader->DstPort == m_httpsStandardPort || tcpHeader->DstPort == m_httpsAltPort));
+                                Volatile.Write(ref _v6EncryptionHints[tcpHeader->SrcPort], (tcpHeader->DstPort == _httpsStandardPort || tcpHeader->DstPort == _httpsAltPort));
                             }
                             break;
 
                         case false:
                             {
-                                Volatile.Write(ref m_v4ShouldFilter[tcpHeader->SrcPort], (byte)FirewallAction.DontFilterApplication);
+                                Volatile.Write(ref _v4ShouldFilter[tcpHeader->SrcPort], (byte)FirewallAction.DontFilterApplication);
 
-                                Volatile.Write(ref m_v4EncryptionHints[tcpHeader->SrcPort], (tcpHeader->DstPort == m_httpsStandardPort || tcpHeader->DstPort == m_httpsAltPort));
+                                Volatile.Write(ref _v4EncryptionHints[tcpHeader->SrcPort], (tcpHeader->DstPort == _httpsStandardPort || tcpHeader->DstPort == _httpsAltPort));
                             }
                             break;
                     }
@@ -697,17 +697,17 @@ namespace CitadelCore.Windows.Diversion
                     {
                         case true:
                             {
-                                Volatile.Write(ref m_v6ShouldFilter[tcpHeader->SrcPort], (byte)response.Action);
+                                Volatile.Write(ref _v6ShouldFilter[tcpHeader->SrcPort], (byte)response.Action);
 
-                                Volatile.Write(ref m_v6EncryptionHints[tcpHeader->SrcPort], response.EncryptedHint ?? (tcpHeader->DstPort == m_httpsStandardPort || tcpHeader->DstPort == m_httpsAltPort));
+                                Volatile.Write(ref _v6EncryptionHints[tcpHeader->SrcPort], response.EncryptedHint ?? (tcpHeader->DstPort == _httpsStandardPort || tcpHeader->DstPort == _httpsAltPort));
                             }
                             break;
 
                         case false:
                             {
-                                Volatile.Write(ref m_v4ShouldFilter[tcpHeader->SrcPort], (byte)response.Action);
+                                Volatile.Write(ref _v4ShouldFilter[tcpHeader->SrcPort], (byte)response.Action);
 
-                                Volatile.Write(ref m_v4EncryptionHints[tcpHeader->SrcPort], response.EncryptedHint ?? (tcpHeader->DstPort == m_httpsStandardPort || tcpHeader->DstPort == m_httpsAltPort));
+                                Volatile.Write(ref _v4EncryptionHints[tcpHeader->SrcPort], response.EncryptedHint ?? (tcpHeader->DstPort == _httpsStandardPort || tcpHeader->DstPort == _httpsAltPort));
                             }
                             break;
                     }
