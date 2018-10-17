@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.0.16</Version>
+    <Version>3.1.2</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,12 +11,14 @@
     <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Fixes an issue where it was possible to overflow the flow tracking arrays.
-No longer ignores imposter packets.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds a replay API for external filtering.
+Inherits websocket implementation fixes by upgrading buggy third-party package.
+Adds stream "Closed" event for inspection streams.
+Fixes an issue where the InspectionStream object fed duplicate data back to the library user.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.0.16.0</AssemblyVersion>
-    <FileVersion>3.0.16.0</FileVersion>
+    <AssemblyVersion>3.1.2.0</AssemblyVersion>
+    <FileVersion>3.1.2.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -40,7 +42,7 @@ No longer ignores imposter packets.</PackageReleaseNotes>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.0.14" />
+    <PackageReference Include="CitadelCore" Version="3.1.2" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     

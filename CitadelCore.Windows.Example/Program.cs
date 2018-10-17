@@ -12,6 +12,7 @@ using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Net.Proxy;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -44,10 +45,16 @@ namespace CitadelCoreTest
                 }
                 else
                 {
-                    // Let's allow chrome to access TCP 80 and 443, but block all other
-                    // ports. This is where we're blocking any non-80/443 bound transmission.
-                    Console.WriteLine("Blocking internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
-                    return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.BlockInternetForApplication);
+                    // Let's allow chrome to access TCP 80 and 443, but ignore all other
+                    // ports. We want to allow non 80/443 requests to go through because
+                    // this example now demonstrates the replay API, which will cause
+                    // a bunch of browser tabs to open whenever you visit my website.
+                    //
+                    // If we filtered the replays back through the proxy, who knows
+                    // what would happen! Actually that's not true, you'd invoke an infinite
+                    // loopback, spawn a ton of browser tabs and then call me a bad programmer.
+                    Console.WriteLine("Ignoring internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+                    return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.DontFilterApplication);
                 }
             }
 
@@ -136,6 +143,24 @@ namespace CitadelCoreTest
 
             if (RedirectBingToYahoo(messageInfo))
             {
+                return;
+            }
+
+            // Get Technikempire.com as a replay request. 
+            // Replay requests are only available on response message types.
+            // This will cause us to receive a request URI on the IpV4 loopback adapter
+            // that will enable us to "replay" the request.
+            //
+            // This "replay" is a mirroring of the data, allowing it to pass through
+            // but being duplicated in real time. This means you can inspect the
+            // stream in-parallel without interrupting the original stream.
+            //
+            // At any time, you can force the original, mirrored stream to abort and
+            // close by invoking the callback provided in the relay inspection
+            // callback handler.
+            if (messageInfo.Url.Host.Equals("technikempire.com", StringComparison.OrdinalIgnoreCase))
+            {
+                messageInfo.ProxyNextAction = ProxyNextAction.AllowButRequestResponseReplay;
                 return;
             }
 
@@ -237,7 +262,7 @@ namespace CitadelCoreTest
                 // site, but you can't play any videos.
                 // This is just to demonstrate that it's possible to have complete
                 // control over unbuffered streams.
-                dropConnection = true;
+                //dropConnection = true;
             }
         }
 
@@ -278,6 +303,35 @@ namespace CitadelCoreTest
             FirewallManager.Instance.Rules.Add(outboundRule);
         }
 
+        /// <summary>
+        /// Called whenever a requested replay is available for access.
+        /// </summary>
+        /// <param name="replayUrl">
+        /// The localhost URL to request the replay on.
+        /// </param>
+        /// <param name="cancellationCallback">
+        /// A callback that you can use to terminate the playback and, optionally, the source stream with.
+        /// </param>
+        private static void OnReplayInspection(string replayUrl, HttpReplayTerminationCallback cancellationCallback)
+        {
+            // Just get the default browser to open the URL.
+            Console.WriteLine(replayUrl);
+            Process.Start(replayUrl);
+
+            // Note - Once you access a replay, it's gone. Resources are flushed and it's not persisted anywhere.
+            // Note - You must access a replay as soon as possible. There is a 65 megabyte internal memory limit
+            // for buffering while waiting for a client to connect.
+            // Note - A replay is a verbatum copy, headers and all, of a filtered transaction in progress. It is
+            // a real-time duplicate of a filtered stream. The only exception is the transfer-encoding and
+            // content-length headers. They will be changed and Kestrel most certainly will always chunk the
+            // replay.
+
+            // The original reason for the replay API was to duplicate video streams in real-time so they
+            // the duplicate can be fed to Windows Media Foundation and image classification can be
+            // performed on the video frames. If and when bad images are found in the video stream,
+            // the cancellationCallback can be used to kill the original, source video stream.
+        }
+
         private static void Main(string[] args)
         {
             GrantSelfFirewallAccess();
@@ -316,6 +370,7 @@ namespace CitadelCoreTest
             {
                 AuthorityName = "Fake Authority",
                 FirewallCheckCallback = OnFirewallCheck,
+                HttpMessageReplayInspectionCallback = OnReplayInspection,
                 NewHttpMessageHandler = OnNewMessage,
                 HttpMessageWholeBodyInspectionHandler = OnWholeBodyContentInspection,
                 HttpMessageStreamedInspectionHandler = OnStreamedContentInspection
