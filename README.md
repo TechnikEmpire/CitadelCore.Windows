@@ -1,4 +1,7 @@
 # CitadelCore.Windows
+
+This is the open source version of our filtering proxy for Windows. It is now in a feature freeze, and will only receive bug fix patches. Development continues privately at Technik Empire. If you have a commercial interest in this software, please contact us info@technikempire.com.
+
 This is a platform-specific implementation of the abstract [Citadel Core library](https://github.com/TechnikEmpire/CitadelCore) for Windows. This library implements the packet diversion mechanism required by the base Citadel Core library using [WinDivert](https://github.com/basil00/Divert). 
 
 As of version 3.0.x, this library is licensed under the [MPL 2.0](https://www.mozilla.org/en-US/MPL/2.0/).
