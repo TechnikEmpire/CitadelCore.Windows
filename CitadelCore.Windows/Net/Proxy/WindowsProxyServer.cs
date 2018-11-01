@@ -20,6 +20,11 @@ namespace CitadelCore.Windows.Net.Proxy
     public class WindowsProxyServer : ProxyServer
     {
         /// <summary>
+        /// The configuration used to create this proxy server instance.
+        /// </summary>
+        private readonly ProxyServerConfiguration _sourceCfg;
+
+        /// <summary>
         /// Creates a new WindowsProxyServer instance. Really there should only ever be a single
         /// instance created at a time.
         /// </summary>
@@ -31,6 +36,7 @@ namespace CitadelCore.Windows.Net.Proxy
         /// </exception>
         public WindowsProxyServer(ProxyServerConfiguration configuration) : base(configuration)
         {
+            _sourceCfg = configuration;
         }
 
         /// <summary>
@@ -54,7 +60,9 @@ namespace CitadelCore.Windows.Net.Proxy
         /// </returns>
         protected override IDiverter CreateDiverter(IPEndPoint ipv4HttpEp, IPEndPoint ipv4HttpsEp, IPEndPoint ipv6HttpEp, IPEndPoint ipv6HttpsEp)
         {
-            return new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port);
+            var diverter = new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port);
+            diverter.DropExternalProxies = _sourceCfg != null ? _sourceCfg.BlockExternalProxies : true;
+            return diverter;
         }
     }
 }

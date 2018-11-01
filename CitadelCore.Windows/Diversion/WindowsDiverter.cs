@@ -153,6 +153,30 @@ namespace CitadelCore.Windows.Diversion
         }
 
         /// <summary>
+        /// Private member for <see cref="DropExternalProxies"/>.
+        /// </summary>
+        private volatile bool _dropExternalProxies = false;
+
+        /// <summary>
+        /// Gets or sets whether or not the diverter should drop external proxy packets.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to false.
+        /// </remarks>
+        public bool DropExternalProxies
+        {
+            get
+            {
+                return _dropExternalProxies;
+            }
+
+            set
+            {
+                _dropExternalProxies = value;
+            }
+        }
+
+        /// <summary>
         /// Constructs a new WindowsDiverter instance.
         /// </summary>
         /// <param name="v4httpProxyPort">
@@ -439,21 +463,26 @@ namespace CitadelCore.Windows.Diversion
                             {
                                 isLocalIpv4 = parseResult.IPv4Header->DstAddr.IsPrivateIpv4Address();
 
-                                if (isLocalIpv4)
+                                // Don't even bother checking this if the user has requested that we
+                                // allow external proxies.
+                                if (_dropExternalProxies)
                                 {
-#if !ENGINE_NO_BLOCK_TOR
-                                    byte[] payload = null;
-                                    if (payloadBufferPtr != null && payloadBufferPtr.Length > 0)
+                                    if (isLocalIpv4)
                                     {
-                                        payload = payloadBufferPtr.ToArray();
-
-                                        if (payload.IsSocksProxyConnect())
+#if !ENGINE_NO_BLOCK_TOR
+                                        byte[] payload = null;
+                                        if (payloadBufferPtr != null && payloadBufferPtr.Length > 0)
                                         {
-                                            LoggerProxy.Default.Info("Blocking SOCKS proxy connect.");
-                                            continue;
+                                            payload = payloadBufferPtr.ToArray();
+
+                                            if (payload.IsSocksProxyConnect())
+                                            {
+                                                LoggerProxy.Default.Info("Blocking SOCKS proxy connect.");
+                                                continue;
+                                            }
                                         }
-                                    }
 #endif
+                                    }
                                 }
                             }
                         }

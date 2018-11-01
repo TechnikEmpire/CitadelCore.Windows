@@ -373,7 +373,8 @@ namespace CitadelCoreTest
                 HttpMessageReplayInspectionCallback = OnReplayInspection,
                 NewHttpMessageHandler = OnNewMessage,
                 HttpMessageWholeBodyInspectionHandler = OnWholeBodyContentInspection,
-                HttpMessageStreamedInspectionHandler = OnStreamedContentInspection
+                HttpMessageStreamedInspectionHandler = OnStreamedContentInspection,
+                BlockExternalProxies = true
             };
             
 
