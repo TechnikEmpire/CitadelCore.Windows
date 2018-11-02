@@ -157,7 +157,7 @@ namespace CitadelCoreTest
         /// <returns>
         /// True if we should fulfill the request ourselves, false otherwise.
         /// </returns>
-        private static bool ManuallyFullfill(HttpMessageInfo messageInfo)
+        private static bool ManuallyFulfill(HttpMessageInfo messageInfo)
         {
             if (messageInfo.MessageType == MessageType.Request)
             {
@@ -183,6 +183,11 @@ namespace CitadelCoreTest
         /// </remarks>
         private static void OnNewMessage(HttpMessageInfo messageInfo)
         {
+            if (messageInfo.BodyContentType != string.Empty)
+            {
+                Console.WriteLine("New message with content of type: {0}", messageInfo.BodyContentType);
+            }
+
             ForceGoogleSafeSearch(messageInfo);
 
             if (RedirectBingToYahoo(messageInfo))
@@ -190,7 +195,7 @@ namespace CitadelCoreTest
                 return;
             }
 
-            if (ManuallyFullfill(messageInfo))
+            if (ManuallyFulfill(messageInfo))
             {
                 return;
             }
@@ -393,7 +398,7 @@ namespace CitadelCoreTest
         /// <returns>
         /// Completion task.
         /// </returns>
-        private static async Task OnManualFullfillmentCallback(HttpMessageInfo messageInfo, HttpContext context)
+        private static async Task OnManualFulfillmentCallback(HttpMessageInfo messageInfo, HttpContext context)
         {
             // Create the message AFTER we give the user a chance to alter things.
             var requestMsg = new HttpRequestMessage(messageInfo.Method, messageInfo.Url);
@@ -534,7 +539,7 @@ namespace CitadelCoreTest
                 NewHttpMessageHandler = OnNewMessage,
                 HttpMessageWholeBodyInspectionHandler = OnWholeBodyContentInspection,
                 HttpMessageStreamedInspectionHandler = OnStreamedContentInspection,
-                HttpExternalRequestHandlerCallback = OnManualFullfillmentCallback,
+                HttpExternalRequestHandlerCallback = OnManualFulfillmentCallback,
                 BlockExternalProxies = true
             };
             
