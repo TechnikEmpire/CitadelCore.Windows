@@ -5,20 +5,24 @@
 * file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+using CitadelCore.Extensions;
 using CitadelCore.IO;
 using CitadelCore.Logging;
 using CitadelCore.Net.Http;
 using CitadelCore.Net.Proxy;
 using CitadelCore.Windows.Net.Proxy;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using WindowsFirewallHelper;
 
 namespace CitadelCoreTest
@@ -29,6 +33,22 @@ namespace CitadelCoreTest
 
         private static readonly ushort s_standardHttpPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)80);
         private static readonly ushort s_standardHttpsPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)443);
+
+        /// <summary>
+        /// We pass this in to stream copy operations whenever the user has asked us to pull a
+        /// payload from the net into memory. We set a hard limit of ~128 megs simply to avoid being
+        /// vulnerable to an attack that would balloon memory consumption.
+        /// </summary>
+        private static readonly long s_maxInMemoryData = 128000000;
+
+        private static HttpClient s_client = new HttpClient(new HttpClientHandler
+        {
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            UseCookies = false,
+            ClientCertificateOptions = ClientCertificateOption.Automatic,
+            AllowAutoRedirect = true,
+            Proxy = null
+        }, true);
 
         private static FirewallResponse OnFirewallCheck(FirewallRequest request)
         {
@@ -128,6 +148,30 @@ namespace CitadelCoreTest
         }
 
         /// <summary>
+        /// Checks whether the host is MSNBC.com and if so, we will tell the proxy to let us fulfill
+        /// the request ourselves.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        /// <returns>
+        /// True if we should fulfill the request ourselves, false otherwise.
+        /// </returns>
+        private static bool ManuallyFullfill(HttpMessageInfo messageInfo)
+        {
+            if (messageInfo.MessageType == MessageType.Request)
+            {
+                if (messageInfo.Url.Host.Equals("msnbc.com", StringComparison.OrdinalIgnoreCase))
+                {
+                    messageInfo.ProxyNextAction = ProxyNextAction.AllowButDelegateHandler;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Called whenever a new request or response message is intercepted.
         /// </summary>
         /// <param name="messageInfo">
@@ -142,6 +186,11 @@ namespace CitadelCoreTest
             ForceGoogleSafeSearch(messageInfo);
 
             if (RedirectBingToYahoo(messageInfo))
+            {
+                return;
+            }
+
+            if (ManuallyFullfill(messageInfo))
             {
                 return;
             }
@@ -250,7 +299,7 @@ namespace CitadelCoreTest
         /// Whether or not to immediately terminate the connection.
         /// </param>
         private static void OnStreamedContentInspection(HttpMessageInfo messageInfo, StreamOperation operation, Memory<byte> buffer, out bool dropConnection)
-        {
+        {   
             var toFrom = operation == StreamOperation.Read ? "from" : "to";
             Console.WriteLine($"Stream {operation} {buffer.Length} bytes {toFrom} {messageInfo.Url}");
             dropConnection = false;
@@ -262,7 +311,7 @@ namespace CitadelCoreTest
                 // site, but you can't play any videos.
                 // This is just to demonstrate that it's possible to have complete
                 // control over unbuffered streams.
-                //dropConnection = true;
+                // dropConnection = true;
             }
         }
 
@@ -332,6 +381,117 @@ namespace CitadelCoreTest
             // the cancellationCallback can be used to kill the original, source video stream.
         }
 
+        /// <summary>
+        /// Called whenever we request to fulfill a request ourselves.
+        /// </summary>
+        /// <param name="messageInfo">
+        /// The message info.
+        /// </param>
+        /// <param name="context">
+        /// The http context to read and write to and from.
+        /// </param>
+        /// <returns>
+        /// Completion task.
+        /// </returns>
+        private static async Task OnManualFullfillmentCallback(HttpMessageInfo messageInfo, HttpContext context)
+        {
+            // Create the message AFTER we give the user a chance to alter things.
+            var requestMsg = new HttpRequestMessage(messageInfo.Method, messageInfo.Url);
+
+            // Ignore failed headers. We don't really care.
+            var initialFailedHeaders = requestMsg.PopulateHeaders(messageInfo.Headers, messageInfo.ExemptedHeaders);
+
+            // Make sure we send the body.
+            if (context.Request.Body != null)
+            {
+                if (context.Request.Body != null && (context.Request.Headers.ContainsKey("Transfer-Encoding") || (context.Request.ContentLength.HasValue && context.Request.ContentLength.Value > 0)))
+                {
+                    // We have a body, but the user doesn't want to inspect it. So,
+                    // we'll just set our content to wrap the context's input stream.
+                    requestMsg.Content = new StreamContent(context.Request.Body);
+                }
+            }
+
+            try
+            {
+                var response = await s_client.SendAsync(requestMsg, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted);
+
+                // Blow away all response headers. We wanna clone these now from our upstream request.
+                context.Response.ClearAllHeaders();
+
+                // Ensure our client's response status code is set to match ours.
+                context.Response.StatusCode = (int)response.StatusCode;
+
+                var upstreamResponseHeaders = response.ExportAllHeaders();
+
+                bool responseHasZeroContentLength = false;
+                bool responseIsFixedLength = false;
+
+                foreach (var kvp in upstreamResponseHeaders.ToIHeaderDictionary())
+                {
+                    foreach (var value in kvp.Value)
+                    {
+                        if (kvp.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                        {
+                            responseIsFixedLength = true;
+
+                            if (value.Length <= 0 && value.Equals("0"))
+                            {
+                                responseHasZeroContentLength = true;
+                            }
+                        }
+                    }
+                }
+
+                // Copy over the upstream headers.
+                context.Response.PopulateHeaders(upstreamResponseHeaders, new System.Collections.Generic.HashSet<string>());
+
+                // Copy over the upstream body.
+                using (var responseStream = await response?.Content.ReadAsStreamAsync())
+                {
+                    context.Response.StatusCode = (int)response.StatusCode;
+                    context.Response.PopulateHeaders(response.ExportAllHeaders(), new System.Collections.Generic.HashSet<string>());
+
+                    if (!responseHasZeroContentLength && responseIsFixedLength)
+                    {
+                        using (var ms = new MemoryStream())
+                        {
+                            await Microsoft.AspNetCore.Http.Extensions.StreamCopyOperation.CopyToAsync(responseStream, ms, s_maxInMemoryData, context.RequestAborted);
+
+                            var responseBody = ms.ToArray();
+
+                            context.Response.Headers.Remove("Content-Length");
+
+                            context.Response.Headers.Add("Content-Length", responseBody.Length.ToString());
+
+                            await context.Response.Body.WriteAsync(responseBody, 0, responseBody.Length);
+                        }
+                    }
+                    else
+                    {
+                        context.Response.Headers.Remove("Content-Length");
+
+                        if (responseHasZeroContentLength)
+                        {
+                            context.Response.Headers.Add("Content-Length", "0");
+                        }
+                        else
+                        {
+                            await Microsoft.AspNetCore.Http.Extensions.StreamCopyOperation.CopyToAsync(responseStream, context.Response.Body, null, context.RequestAborted);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                while (e != null)
+                {
+                    Console.WriteLine(e.Message);
+                    Console.WriteLine(e.StackTrace);
+                }
+            }
+        }
+
         private static void Main(string[] args)
         {
             GrantSelfFirewallAccess();
@@ -374,6 +534,7 @@ namespace CitadelCoreTest
                 NewHttpMessageHandler = OnNewMessage,
                 HttpMessageWholeBodyInspectionHandler = OnWholeBodyContentInspection,
                 HttpMessageStreamedInspectionHandler = OnStreamedContentInspection,
+                HttpExternalRequestHandlerCallback = OnManualFullfillmentCallback,
                 BlockExternalProxies = true
             };
             

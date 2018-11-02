@@ -2,24 +2,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.4.1</Version>
+    <Version>3.6.0</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
     <Description>Transparent filtering proxy engine for Windows.</Description>
-    <Copyright>Copyright 2017-Present Jesse Nicholson</Copyright>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/TechnikEmpire/CitadelCore.Windows/master/LICENSE</PackageLicenseUrl>
+    <Copyright>Copyright 2017-Present (c) Jesse Nicholson. All rights reserved.</Copyright>
+    <PackageLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Adds the ability to exclude headers from being excluded. Normally forbidden headers are stripped, but now the user can control this.
-Adds the ability to configure the proxy server in regards to dropping external proxy packets (originating from another proxy on the local machine).
-Adds the ability to provide a custom message handler for all proxy server upstream connections. This enables you to define an upstream proxy, etc.
-Fixes an issue where the host header is not set correctly on modification.
-Purges singlestons from the source code. Handlers are now instance members of proxy server classes via hidden IStartup instances.</PackageReleaseNotes>
+    <PackageReleaseNotes>Adds the ability for users to fullfill HTTP requests themselves.
+Adds the ability for users to supply their own HttpClient's on a per-request basis to fulfill requests with.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.4.1.0</AssemblyVersion>
-    <FileVersion>3.4.1.0</FileVersion>
+    <AssemblyVersion>3.6.0.0</AssemblyVersion>
+    <FileVersion>3.6.0.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -43,7 +40,7 @@ Purges singlestons from the source code. Handlers are now instance members of pr
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.4.1" />
+    <PackageReference Include="CitadelCore" Version="3.6.0" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     
