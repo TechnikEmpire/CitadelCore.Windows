@@ -33,6 +33,8 @@ namespace CitadelCoreTest
 
         private static readonly ushort s_standardHttpPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)80);
         private static readonly ushort s_standardHttpsPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)443);
+        private static readonly ushort s_altHttpPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)8080);
+        private static readonly ushort s_altHttpsPortNetworkOrder = (ushort)IPAddress.HostToNetworkOrder((short)8443);
 
         /// <summary>
         /// We pass this in to stream copy operations whenever the user has asked us to pull a
@@ -53,11 +55,17 @@ namespace CitadelCoreTest
         private static FirewallResponse OnFirewallCheck(FirewallRequest request)
         {
             // Only filter chrome.
-            var filtering = request.BinaryAbsolutePath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
+            //var filtering = request.BinaryAbsolutePath.IndexOf("chrome", StringComparison.OrdinalIgnoreCase) != -1;
+            var filtering = true;
 
             if (filtering)
             {
-                if (request.RemotePort == s_standardHttpPortNetworkOrder || request.RemotePort == s_standardHttpsPortNetworkOrder)
+                if (
+                    request.RemotePort == s_standardHttpPortNetworkOrder || 
+                    request.RemotePort == s_standardHttpsPortNetworkOrder ||
+                    request.RemotePort == s_altHttpPortNetworkOrder ||
+                    request.RemotePort == s_altHttpsPortNetworkOrder
+                    )
                 {
                     // Let's allow chrome to access TCP 80 and 443, but block all other ports.
                     Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
@@ -553,10 +561,8 @@ namespace CitadelCoreTest
             // And you're up and running.
             Console.WriteLine("Proxy Running");
 
-            Console.WriteLine("Listening for IPv4 HTTP connections on port {0}.", proxyServer.V4HttpEndpoint.Port);
-            Console.WriteLine("Listening for IPv4 HTTPS connections on port {0}.", proxyServer.V4HttpsEndpoint.Port);
-            Console.WriteLine("Listening for IPv6 HTTP connections on port {0}.", proxyServer.V6HttpEndpoint.Port);
-            Console.WriteLine("Listening for IPv6 HTTPS connections on port {0}.", proxyServer.V6HttpsEndpoint.Port);
+            Console.WriteLine("Listening for IPv4 HTTP/HTTPS connections on port {0}.", proxyServer.V4HttpEndpoint.Port);
+            Console.WriteLine("Listening for IPv6 HTTP/HTTPS connections on port {0}.", proxyServer.V6HttpEndpoint.Port);
 
             // Don't exit on me yet fam.
             manualResetEvent.WaitOne();

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.6.2</Version>
+    <Version>3.7.0</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,11 +11,11 @@
     <PackageLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Fixes an issue where accessing content-type header could cause a null-ref exception.</PackageReleaseNotes>
+    <PackageReleaseNotes>Now dynamically handles HTTPS and HTTP streams on a single bound port. Clients no longer need to guess if a non-standard port connection is HTTP or HTTPS, the engine will figure this out itself.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.6.2.0</AssemblyVersion>
-    <FileVersion>3.6.2.0</FileVersion>
+    <AssemblyVersion>3.7.0.0</AssemblyVersion>
+    <FileVersion>3.7.0.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -39,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.6.2" />
+    <PackageReference Include="CitadelCore" Version="3.7.0" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     
