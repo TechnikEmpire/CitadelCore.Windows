@@ -68,7 +68,7 @@ namespace CitadelCoreTest
                     )
                 {
                     // Let's allow chrome to access TCP 80 and 443, but block all other ports.
-                    Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+                    //Console.WriteLine("Filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
                     return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.FilterApplication);
                 }
                 else
@@ -81,13 +81,13 @@ namespace CitadelCoreTest
                     // If we filtered the replays back through the proxy, who knows
                     // what would happen! Actually that's not true, you'd invoke an infinite
                     // loopback, spawn a ton of browser tabs and then call me a bad programmer.
-                    Console.WriteLine("Ignoring internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+                    //Console.WriteLine("Ignoring internet for application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
                     return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.DontFilterApplication);
                 }
             }
 
             // For all other applications, just let them access the internet without filtering.
-            Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
+            //Console.WriteLine("Not filtering application {0} destined for {1}", request.BinaryAbsolutePath, (ushort)IPAddress.HostToNetworkOrder((short)request.RemotePort));
             return new FirewallResponse(CitadelCore.Net.Proxy.FirewallAction.DontFilterApplication);
         }
 
@@ -190,7 +190,7 @@ namespace CitadelCoreTest
         /// headers, the request target, etc etc.
         /// </remarks>
         private static void OnNewMessage(HttpMessageInfo messageInfo)
-        {
+        {   
             if (messageInfo.BodyContentType != string.Empty)
             {
                 Console.WriteLine("New message with content of type: {0}", messageInfo.BodyContentType);
