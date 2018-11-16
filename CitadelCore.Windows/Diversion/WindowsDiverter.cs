@@ -246,8 +246,8 @@ namespace CitadelCore.Windows.Diversion
                 string mainFilterString = "outbound and tcp and ((ip and ip.SrcAddr != 127.0.0.1) or (ipv6 and ipv6.SrcAddr != ::1))";
 #else
                 string mainFilterString = "outbound and tcp";
-#endif
-                string QUICFilterString = "udp and (udp.DstPort == 80 || udp.DstPort == 443)";
+#endif          
+                string QUICFilterString = "outbound and udp and (udp.DstPort == 80 || udp.DstPort == 443)";
 
                 _diversionHandle = WinDivert.WinDivertOpen(mainFilterString, WinDivertLayer.Network, -1000, 0);
 

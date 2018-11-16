@@ -190,11 +190,16 @@ namespace CitadelCoreTest
         /// headers, the request target, etc etc.
         /// </remarks>
         private static void OnNewMessage(HttpMessageInfo messageInfo)
-        {   
+        {
             if (messageInfo.BodyContentType != string.Empty)
             {
-                Console.WriteLine("New message with content of type: {0}", messageInfo.BodyContentType);
+                Console.WriteLine("New message with content of type: {0}\n\t{1}\n\t{2}", messageInfo.BodyContentType, messageInfo.Url, messageInfo.MessageProtocol);
             }
+            else
+            {
+                Console.WriteLine("New message: {0}\n\t{1}", messageInfo.Url, messageInfo.MessageProtocol);
+            }
+            
 
             ForceGoogleSafeSearch(messageInfo);
 
@@ -374,7 +379,7 @@ namespace CitadelCoreTest
         /// <param name="cancellationCallback">
         /// A callback that you can use to terminate the playback and, optionally, the source stream with.
         /// </param>
-        private static void OnReplayInspection(string replayUrl, HttpReplayTerminationCallback cancellationCallback)
+        private static void OnReplayInspection(HttpMessageInfo messageInfo, string replayUrl, HttpReplayTerminationCallback cancellationCallback)
         {
             // Just get the default browser to open the URL.
             Console.WriteLine(replayUrl);

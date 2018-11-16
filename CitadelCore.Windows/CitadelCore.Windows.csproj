@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>3.7.4</Version>
+    <Version>4.0.1</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,12 +11,13 @@
     <PackageLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Now uses own websocket fork.
-Bypasses restrictions on GET requests to enable technically-illegal headers that everyone uses anyway, including Microsoft.</PackageReleaseNotes>
+    <PackageReleaseNotes>Only drops outbound QUIC packets now instead of wasting cycles grabbing inbound UDP.
+Includes originating message info in replay callback. This is a breaking API change, so version is bumped to 4.x.
+Fixes an issue where websockets were malfunctioning as a result of the new websocket fork work.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>3.7.4.0</AssemblyVersion>
-    <FileVersion>3.7.4.0</FileVersion>
+    <AssemblyVersion>4.0.1.0</AssemblyVersion>
+    <FileVersion>4.0.1.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -40,7 +41,7 @@ Bypasses restrictions on GET requests to enable technically-illegal headers that
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="3.7.4" />
+    <PackageReference Include="CitadelCore" Version="4.0.1" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     
