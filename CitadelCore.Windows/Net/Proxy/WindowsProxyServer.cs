@@ -60,8 +60,10 @@ namespace CitadelCore.Windows.Net.Proxy
         /// </returns>
         protected override IDiverter CreateDiverter(IPEndPoint ipv4HttpEp, IPEndPoint ipv4HttpsEp, IPEndPoint ipv6HttpEp, IPEndPoint ipv6HttpsEp)
         {
-            var diverter = new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port);
-            diverter.DropExternalProxies = _sourceCfg != null ? _sourceCfg.BlockExternalProxies : true;
+            var diverter = new WindowsDiverter((ushort)ipv4HttpEp.Port, (ushort)ipv4HttpsEp.Port, (ushort)ipv6HttpEp.Port, (ushort)ipv6HttpsEp.Port)
+            {
+                DropExternalProxies = _sourceCfg != null ? _sourceCfg.BlockExternalProxies : true
+            };
             return diverter;
         }
     }

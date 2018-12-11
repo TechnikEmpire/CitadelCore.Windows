@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using WinDivertSharp;
 using WinDivertSharp.WinAPI;
@@ -153,7 +154,7 @@ namespace CitadelCore.Windows.Diversion
         }
 
         /// <summary>
-        /// Private member for <see cref="DropExternalProxies"/>.
+        /// Private member for <see cref="DropExternalProxies" />.
         /// </summary>
         private volatile bool _dropExternalProxies = false;
 
@@ -243,10 +244,10 @@ namespace CitadelCore.Windows.Diversion
                 _diversionThreads = new List<Thread>();
 
 #if ENGINE_NO_BLOCK_TOR
-                string mainFilterString = "outbound and tcp and ((ip and ip.SrcAddr != 127.0.0.1) or (ipv6 and ipv6.SrcAddr != ::1))";
+                string mainFilterString = GenerateFilterString(true);
 #else
-                string mainFilterString = "outbound and tcp";
-#endif          
+                string mainFilterString = GenerateFilterString(false);
+#endif
                 string QUICFilterString = "outbound and udp and (udp.DstPort == 80 || udp.DstPort == 443)";
 
                 _diversionHandle = WinDivert.WinDivertOpen(mainFilterString, WinDivertLayer.Network, -1000, 0);
@@ -280,7 +281,7 @@ namespace CitadelCore.Windows.Diversion
                         {
                             RunDiversion();
                         }
-                        catch(Exception err)
+                        catch (Exception err)
                         {
                             LoggerProxy.Default.Error(err);
                         }
@@ -289,6 +290,113 @@ namespace CitadelCore.Windows.Diversion
                     _diversionThreads.Last().Start();
                 }
             }
+        }
+
+        /// <summary>
+        /// Gets a filtering string for WinDivert that exempts common windows services.
+        /// </summary>
+        /// <param name="exemptLocalhost">
+        /// Whether or not to exempt loopback packets.
+        /// </param>
+        /// <returns>
+        /// The generated filter string.
+        /// </returns>
+        private static string GenerateFilterString(bool exemptLocalhost)
+        {
+            // We don't want to interrupt well-known, TCP based windows services that have nothing
+            // to do with HTTP/HTTPS.
+            // So, here we generate a WinDivert filter string that exempts such services.
+
+            // This list of ports was taken from:
+            // https://social.technet.microsoft.com/wiki/contents/articles/1772.windows-ports-protocols-and-system-services.aspx?Redirected=true#List_of_Ports
+
+            var statementList = new List<string>();
+
+            var exemptedPorts = new int[]
+            {
+                7, // Echo
+                9, // Discard
+                13, // Daytime
+                17, // Quotd
+                19, // Chargen
+                20, // FTP
+                21, // FTP
+                23, // Telnet
+                25, // SMTP
+                42, // WINS
+                53, // DNS
+                88, // Kerberos
+                102, // X.400
+                110, // POP3
+                119, // NNTP
+                135, // RPC
+                139, // NetBIOS
+                143, // IMAP
+                389, // LDAP
+                445, // SMB
+                464, // Kerberos
+                515, // LPD
+                548, // File
+                554, // RTSP
+                563, // NNTP
+                593, // RPC
+                636, // LDAP
+                993, // IMAP
+                995, // POP3
+                1067, // Installation
+                1068, // Installation
+                1270, // MOM-Encrypted
+                1433, // SQL
+                1723, // PPTP
+                1755, // MMS
+                1801, // MSMQ
+                2101, // MSMQ-DCs
+                2103, // MSMQ-RPC
+                2105, // MSMQ-RPC
+                2107, // MSMQ-Mgmt
+                2393, // OLAP
+                2394, // OLAP
+                2701, // SMS
+                2702, // SMS
+                2703, // SMS
+                2704, // SMS
+                2725, // SQL
+                2869, // UPNP / SSDP
+                3268, // Global
+                3269, // Global
+                3389, // Terminal
+                5000, // SSDP
+                5722, // RPC
+                6001, // Information
+                6002, // Directory
+                6004, // DSProxy/NSPI
+                42424, // ASP.Net
+                51515, // MOM-Clear
+            };
+
+            foreach (var port in exemptedPorts)
+            {
+                statementList.Add($"and tcp.DstPort != {port}");
+            }
+
+            string retVal = string.Empty;
+
+            switch (exemptLocalhost)
+            {
+                case true:
+                    {
+                        retVal = $"outbound and tcp and ((ip and ip.SrcAddr != 127.0.0.1) or (ipv6 and ipv6.SrcAddr != ::1)) {string.Join(" ", statementList)}";
+                    }
+                    break;
+
+                case false:
+                    {
+                        retVal = $"outbound and tcp {string.Join(" ", statementList)}";
+                    }
+                    break;
+            }
+
+            return retVal;
         }
 
         private unsafe void RunDiversion()
@@ -332,7 +440,7 @@ namespace CitadelCore.Windows.Diversion
                     recvAsyncIoLen = 0;
 
                     recvOverlapped = new NativeOverlapped();
-                    WinAPI.Kernel32.ResetEvent(recvEvent);                    
+                    WinAPI.Kernel32.ResetEvent(recvEvent);
 
                     recvOverlapped.EventHandle = recvEvent;
 
@@ -352,7 +460,6 @@ namespace CitadelCore.Windows.Diversion
                         // 258 == WAIT_TIMEOUT
                         while (_running && WinDivertSharp.WinAPI.Kernel32.WaitForSingleObject(recvEvent, 1000) == (uint)WaitForSingleObjectResult.WaitTimeout)
                         {
-                            
                         }
 
                         if (!WinDivertSharp.WinAPI.Kernel32.GetOverlappedResult(_diversionHandle, ref recvOverlapped, ref recvAsyncIoLen, false))
@@ -374,8 +481,8 @@ namespace CitadelCore.Windows.Diversion
 
                         if (parseResult.TcpHeader != null && parseResult.TcpHeader->Syn > 0)
                         {
-                            // Brand new outbound connection. Grab the PID of the process holding this
-                            // port and map it.
+                            // Brand new outbound connection. Grab the PID of the process holding
+                            // this port and map it.
                             if (parseResult.IPv4Header != null)
                             {
                                 var connInfo = GetLocalPacketInfo(parseResult.TcpHeader->SrcPort, parseResult.IPv4Header->SrcAddr);
@@ -429,35 +536,36 @@ namespace CitadelCore.Windows.Diversion
                         #endregion New TCP Connection Detection
 
                         // I put the checks for ipv4 and ipv6 as a double if statement rather than an
-                        // else if because I'm not sure how that would affect dual-mode sockets. Perhaps
-                        // it's possible for both headers to be defined. Probably not, but since I don't
-                        // know, I err on the side of awesome, or uhh, something like that.
+                        // else if because I'm not sure how that would affect dual-mode sockets.
+                        // Perhaps it's possible for both headers to be defined. Probably not, but
+                        // since I don't know, I err on the side of awesome, or uhh, something like that.
 
-                        // We check local packets for TOR/SOCKS packets here. However, if we don't find
-                        // something we want to block on local addresses, then we want to skip these for
-                        // the rest of the filtering and just let them through.
+                        // We check local packets for TOR/SOCKS packets here. However, if we don't
+                        // find something we want to block on local addresses, then we want to skip
+                        // these for the rest of the filtering and just let them through.
 
                         if (dropPacket == false && parseResult.IPv4Header != null && parseResult.TcpHeader != null)
                         {
-                            // Let's explain the weird arcane logic here. First, we check if the current
-                            // flow should even be filtered. We do this, because there's a good chance
-                            // that this flow belongs to our proxy's connections, which we never want to
-                            // filter. If we didn't check this, then we would end up setting the
-                            // isLocalIpv4 flag to true on every single one of our proxy's connections,
-                            // and clients would never get packets ever because with that flag set, the
-                            // direction of the packets wouldn't be sorted.
+                            // Let's explain the weird arcane logic here. First, we check if the
+                            // current flow should even be filtered. We do this, because there's a
+                            // good chance that this flow belongs to our proxy's connections, which
+                            // we never want to filter. If we didn't check this, then we would end up
+                            // setting the isLocalIpv4 flag to true on every single one of our
+                            // proxy's connections, and clients would never get packets ever because
+                            // with that flag set, the direction of the packets wouldn't be sorted.
                             //
-                            // So, we check this, ensure it's actually something we want to filter. Then,
-                            // we check if the packet is destined for a local address. We set the flag
-                            // accordingly, and if true, then we will allow these packets to go out uninterrupted.
+                            // So, we check this, ensure it's actually something we want to filter.
+                            // Then, we check if the packet is destined for a local address. We set
+                            // the flag accordingly, and if true, then we will allow these packets to
+                            // go out uninterrupted.
                             //
-                            // If false, who cares. Regardless of true or false, we check to see if this
-                            // is a TOR/SOCKS4/5 proxy CONNECT, and drop it if it is.
+                            // If false, who cares. Regardless of true or false, we check to see if
+                            // this is a TOR/SOCKS4/5 proxy CONNECT, and drop it if it is.
                             //
-                            // Also note, by letting local/private address destined packets go, we also
-                            // solve the problem of private TLS connections using private TLS self signed
-                            // certs, such as logging into one's router. If we didn't do this check and
-                            // let these through, we would break such connections.
+                            // Also note, by letting local/private address destined packets go, we
+                            // also solve the problem of private TLS connections using private TLS
+                            // self signed certs, such as logging into one's router. If we didn't do
+                            // this check and let these through, we would break such connections.
 
                             if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
                             {
@@ -493,11 +601,12 @@ namespace CitadelCore.Windows.Diversion
                             {
                                 if (parseResult.TcpHeader->SrcPort == _v4HttpProxyPort || parseResult.TcpHeader->SrcPort == _v4HttpsProxyPort)
                                 {
-                                    // Means that the data is originating from our proxy in response to a
-                                    // client's request, which means it was originally meant to go
-                                    // somewhere else. We need to reorder the data such as the src and
-                                    // destination ports and addresses and divert it back inbound, so it
-                                    // appears to be an inbound response from the original external server.
+                                    // Means that the data is originating from our proxy in response
+                                    // to a client's request, which means it was originally meant to
+                                    // go somewhere else. We need to reorder the data such as the src
+                                    // and destination ports and addresses and divert it back
+                                    // inbound, so it appears to be an inbound response from the
+                                    // original external server.
 
                                     modifiedPacket = true;
 
@@ -511,24 +620,26 @@ namespace CitadelCore.Windows.Diversion
                                 else
                                 {
                                     // This means outbound traffic has been captured that we know for
-                                    // sure is not coming from our proxy in response to a client, but we
-                                    // don't know that it isn't the upstream portion of our proxy trying
-                                    // to fetch a response on behalf of a connected client. So, we need
-                                    // to check if we have a cached result for information about the
-                                    // binary generating the outbound traffic for two reasons.
+                                    // sure is not coming from our proxy in response to a client, but
+                                    // we don't know that it isn't the upstream portion of our proxy
+                                    // trying to fetch a response on behalf of a connected client.
+                                    // So, we need to check if we have a cached result for
+                                    // information about the binary generating the outbound traffic
+                                    // for two reasons.
                                     //
-                                    // First, we need to ensure that it's not us, obviously. Secondly, we
-                                    // need to ensure that the binary has been granted firewall access to
-                                    // generate outbound traffic.
+                                    // First, we need to ensure that it's not us, obviously.
+                                    // Secondly, we need to ensure that the binary has been granted
+                                    // firewall access to generate outbound traffic.
 
                                     if (Volatile.Read(ref _v4ShouldFilter[parseResult.TcpHeader->SrcPort]) == (int)FirewallAction.FilterApplication)
                                     {
                                         modifiedPacket = true;
 
-                                        // If the process was identified as a process that is permitted
-                                        // to access the internet, and is not a system process or
-                                        // ourselves, then we divert its packets back inbound to the
-                                        // local machine, changing the destination port appropriately.
+                                        // If the process was identified as a process that is
+                                        // permitted to access the internet, and is not a system
+                                        // process or ourselves, then we divert its packets back
+                                        // inbound to the local machine, changing the destination
+                                        // port appropriately.
                                         var dstAddress = parseResult.IPv4Header->DstAddr;
 
                                         parseResult.IPv4Header->DstAddr = parseResult.IPv4Header->SrcAddr;
@@ -538,9 +649,9 @@ namespace CitadelCore.Windows.Diversion
 
                                         Volatile.Write(ref _v4ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
 
-                                        // Unless we know for sure this is an encrypted connection via
-                                        // the HTTP port, we should always default to sending to the
-                                        // non-encrypted listener.
+                                        // Unless we know for sure this is an encrypted connection
+                                        // via the HTTP port, we should always default to sending to
+                                        // the non-encrypted listener.
                                         var encrypted = Volatile.Read(ref _v4EncryptionHints[parseResult.TcpHeader->SrcPort]);
 
                                         parseResult.TcpHeader->DstPort = encrypted ? _v4HttpsProxyPort : _v4HttpProxyPort;
@@ -548,8 +659,9 @@ namespace CitadelCore.Windows.Diversion
                                 }
                             }
 
-                            // The ipV6 version works exactly the same, just with larger storage for the
-                            // larger addresses. Look at the ipv4 version notes for clarification on anything.
+                            // The ipV6 version works exactly the same, just with larger storage for
+                            // the larger addresses. Look at the ipv4 version notes for clarification
+                            // on anything.
                             if (parseResult.IPv6Header != null && parseResult.TcpHeader != null)
                             {
                                 if (parseResult.TcpHeader->SrcPort == _v6HttpProxyPort || parseResult.TcpHeader->SrcPort == _v6HttpsProxyPort)
@@ -569,10 +681,11 @@ namespace CitadelCore.Windows.Diversion
                                     {
                                         modifiedPacket = true;
 
-                                        // If the process was identified as a process that is permitted
-                                        // to access the internet, and is not a system process or
-                                        // ourselves, then we divert its packets back inbound to the
-                                        // local machine, changing the destination port appropriately.
+                                        // If the process was identified as a process that is
+                                        // permitted to access the internet, and is not a system
+                                        // process or ourselves, then we divert its packets back
+                                        // inbound to the local machine, changing the destination
+                                        // port appropriately.
                                         var dstAddress = parseResult.IPv6Header->DstAddr;
 
                                         parseResult.IPv6Header->DstAddr = parseResult.IPv6Header->SrcAddr;
@@ -582,9 +695,9 @@ namespace CitadelCore.Windows.Diversion
 
                                         Volatile.Write(ref _v6ReturnPorts[parseResult.TcpHeader->SrcPort], parseResult.TcpHeader->DstPort);
 
-                                        // Unless we know for sure this is an encrypted connection via
-                                        // the HTTP port, we should always default to sending to the
-                                        // non-encrypted listener.
+                                        // Unless we know for sure this is an encrypted connection
+                                        // via the HTTP port, we should always default to sending to
+                                        // the non-encrypted listener.
                                         var encrypted = Volatile.Read(ref _v6EncryptionHints[parseResult.TcpHeader->SrcPort]);
 
                                         parseResult.TcpHeader->DstPort = encrypted ? _v6HttpsProxyPort : _v6HttpProxyPort;
@@ -689,8 +802,7 @@ namespace CitadelCore.Windows.Diversion
                 }
                 else
                 {
-                    // No need to null check here, because the above IF catches whenever connInfo
-                    // is null.
+                    // No need to null check here, because the above IF catches whenever connInfo is null.
                     var procPath = connInfo.OwnerProcessPath.Length > 0 ? connInfo.OwnerProcessPath : "SYSTEM";
                     var firewallRequest = new FirewallRequest(procPath, tcpHeader->SrcPort, tcpHeader->DstPort, connInfo.OwnerPid);
                     response = ConfirmDenyFirewallAccess?.Invoke(firewallRequest);
@@ -698,8 +810,8 @@ namespace CitadelCore.Windows.Diversion
 
                 if (response == null)
                 {
-                    // The user couldn't be bothered to give us an answer, so just go ahead and
-                    // let the packet through.
+                    // The user couldn't be bothered to give us an answer, so just go ahead and let
+                    // the packet through.
 
                     switch (isIpv6)
                     {

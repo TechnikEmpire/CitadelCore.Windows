@@ -199,7 +199,6 @@ namespace CitadelCoreTest
             {
                 Console.WriteLine("New message: {0}\n\t{1}", messageInfo.Url, messageInfo.MessageProtocol);
             }
-            
 
             ForceGoogleSafeSearch(messageInfo);
 
