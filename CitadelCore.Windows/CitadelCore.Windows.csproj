@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>4.2.3</Version>
+    <Version>4.2.5</Version>
     <Title>CitadeCore.Windows</Title>
     <Authors>Jesse Nicholson</Authors>
     <Company>Technik Empire</Company>
@@ -11,22 +11,15 @@
     <PackageLicenseUrl>https://www.mozilla.org/en-US/MPL/2.0/</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TechnikEmpire/CitadelCore.Windows</RepositoryUrl>
-    <PackageReleaseNotes>Upgrades core deps.
-Enables HTTP/2 on the proxy front-end, but backend fulfillment is still HTTP/1.x.
-Strips all compression methods from the front end.
-Configures Kestrel for optimal throughput.
-Ensures that headers are replaced if they exist. This ensures that client changes always apply.
-Removes arbitrary limits, such as max length on request strings.
-Fixes an issue where ASP.NET Core incorrectly decodes some URL's, which causes some things to randomly fail as bad requests. Google maps is an example of what suffered in previous versions.
-Now builds out the full URL based on the raw values sent by the browser. This applies to websockets as well.
-Adds the ability to inspect individual websocket messages.
-Fixes an issue where the whole body inspection callback was invoked on websockets even if not requested.
-Exempts well-defined windows-exclusive ports from packet interception.
-Everything is now extremely fast, and stable. No more public changes or additions will be made.</PackageReleaseNotes>
+    <PackageReleaseNotes>Inherts the following changes from the base engine update:
+
+Ensure that we copy response headers only once. It appears that response headers related to content can vanish after we've read the content stream, so to avoid this, we read just once on initial response.
+
+Fixes an issue where the Headers property of HttpMessageInfo objects can be null, which causes null reference exceptions when calling various methods. Changed to always initialize this property with a valid reference, and to perform null checks when accessing internally.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.2.3.0</AssemblyVersion>
-    <FileVersion>4.2.3.0</FileVersion>
+    <AssemblyVersion>4.2.5.0</AssemblyVersion>
+    <FileVersion>4.2.5.0</FileVersion>
     <RepositoryType>git</RepositoryType>
     <PackageTags>proxy, filter, filtering, content filtering, content-filter, websocket proxy, http proxy, https proxy</PackageTags>
   </PropertyGroup>
@@ -50,7 +43,7 @@ Everything is now extremely fast, and stable. No more public changes or addition
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="CitadelCore" Version="4.2.3" />
+    <PackageReference Include="CitadelCore" Version="4.2.5" />
     <PackageReference Include="WinDivertSharp" Version="1.4.3.3" />
   </ItemGroup>
     
