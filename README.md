@@ -1,6 +1,8 @@
 # CitadelCore.Windows
 
-This is the open source version of our filtering proxy for Windows. It is now in a feature freeze, and will only receive bug fix patches. Development continues privately at Technik Empire. If you have a commercial interest in this software, please contact us info@technikempire.com.
+This is the open source version of our filtering proxy for Windows. It is now in a feature freeze, and will only receive bug fix patches. Development continues privately at Technik Empire. 
+
+If you have a commercial interest in this software, my condolences. I will not support you in it. A few people have tried, only to realize their business plan, which is based solely on copying and pasting my work and waking up in a pile of money, doesn't actually pan out. Turns out they didn't have a clue ("internet, like how does it work?") and then come crying to me when reality hits. If you're qualified, you'll never ask me anyway, in which case, all the best to you.
 
 This is a platform-specific implementation of the abstract [Citadel Core library](https://github.com/TechnikEmpire/CitadelCore) for Windows. This library implements the packet diversion mechanism required by the base Citadel Core library using [WinDivert](https://github.com/basil00/Divert). 
 
