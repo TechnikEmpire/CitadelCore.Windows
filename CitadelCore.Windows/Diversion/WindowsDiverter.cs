@@ -797,7 +797,16 @@ namespace CitadelCore.Windows.Diversion
                 FirewallResponse response = null;
                 if (connInfo == null || connInfo.OwnerPid == 4 || connInfo.OwnerPid == 0)
                 {
-                    var firewallRequest = new FirewallRequest("SYSTEM", tcpHeader->SrcPort, tcpHeader->DstPort, connInfo.OwnerPid);
+                    // Check if connInfo is null, if so, then use a predefined pid for process. Usually null connInfo is a connection from systm with pid 0.
+                    // This error might happen in UI mode
+
+                    ulong ownerPid = 0;
+                    if(connInfo != null)
+                    {
+                        ownerPid = connInfo.OwnerPid;
+                    }
+
+                    var firewallRequest = new FirewallRequest("SYSTEM", tcpHeader->SrcPort, tcpHeader->DstPort, ownerPid);
                     response = ConfirmDenyFirewallAccess?.Invoke(firewallRequest);
                 }
                 else
